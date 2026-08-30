@@ -25,6 +25,13 @@ export interface PlayerState {
   isTenpai?: boolean;
 }
 
+export interface RoundResult {
+  type: 'exhaustive_draw' | 'tsumo' | 'ron';
+  winnerIndex?: number;
+  loserIndex?: number;
+  message: string;
+}
+
 export interface GameState {
   roundWind: 'east' | 'south'; // 東場 / 南場
   roundNumber: number;         // 1-4 (東1局〜東4局)
@@ -38,4 +45,11 @@ export interface GameState {
   activePlayerIndex: number;   // 手番プレイヤー (0..3)
   turnCount: number;           // 現在の巡目
   phase: GamePhase;
+  lastDiscard?: {
+    playerIndex: number;
+    tile: Tile;
+    isTsumogiri: boolean;
+  };
+  roundResult?: RoundResult;
 }
+
