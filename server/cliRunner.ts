@@ -155,8 +155,12 @@ export async function runCLI(
     let stdoutData = '';
     let stderrData = '';
 
+    const envPath = process.env.PATH
+      ? `/Users/s-ikari/.local/bin:/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}`
+      : '/Users/s-ikari/.local/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin';
+
     const proc = spawn(command, args, {
-      env: { ...process.env },
+      env: { ...process.env, PATH: envPath },
       shell: false,
     });
 
