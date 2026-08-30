@@ -5,6 +5,7 @@ import {
   playerDiscardAction,
   cpuStepAction,
   advanceToNextRound,
+  resolvePendingAction,
 } from '../src/core/game/gameEngine';
 import { sanitizeForPlayer } from '../src/ai/types/context';
 
@@ -64,7 +65,11 @@ describe('GameEngine (4人対局ゲームループ)', () => {
     state = playerDiscardAction(state, 0, state.players[0].drawnTile!.id); // 0 -> 1
     state = cpuStepAction(state); // 1 -> 2
     state = cpuStepAction(state); // 2 -> 3
-    state = cpuStepAction(state); // 3 -> 0
+    state = cpuStepAction(state); // 3 -> (waiting_action or 0)
+
+    if (state.phase === 'waiting_action') {
+      state = resolvePendingAction(state, 0, 'pass');
+    }
 
     expect(state.activePlayerIndex).toBe(0);
     expect(state.players[0].drawnTile).not.toBeNull();

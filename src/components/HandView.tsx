@@ -1,33 +1,34 @@
 import React, { useState } from 'react';
-import { Tile } from '../core/types/tile';
 import { TileView } from './TileView';
 import { getTileNameJa } from '../core/utils/tileUtils';
 import { calcShanten } from '../core/shanten/shanten';
 import { calcUkeireFor13Tiles, calcUkeireForDiscards } from '../core/shanten/ukeire';
 import { checkWinningHand } from '../core/winning/winningHand';
-import { Sparkles, Trophy } from 'lucide-react';
+import { Sparkles, Trophy, Zap } from 'lucide-react';
+import { PlayerState } from '../core/types/game';
 
 interface HandViewProps {
-  hand: Tile[];
-  drawnTile: Tile | null;
+  player: PlayerState;
   isMyTurn: boolean;
-  onDiscard: (tileId: string, isTsumo: boolean) => void;
+  onDiscard: (tileId: string, isTsumo: boolean, declareRiichi?: boolean) => void;
   onDeclareTsumoWin?: () => void;
 }
 
 export const HandView: React.FC<HandViewProps> = ({
-  hand,
-  drawnTile,
+  player,
   isMyTurn,
   onDiscard,
   onDeclareTsumoWin,
 }) => {
   const [selectedTileId, setSelectedTileId] = useState<string | null>(null);
+  const [isRiichiSelected, setIsRiichiSelected] = useState<boolean>(false);
+
+  const { hand, drawnTile, isRiichi, score, melds } = player;
 
   // 14枚状態（ツモ牌あり）または 13枚状態でのシャンテン数・受け入れ計算
   const fullTiles = drawnTile ? [...hand, drawnTile] : hand;
   const shantenRes = calcShanten(fullTiles);
-  
+
   // 13枚時の受け入れ（ツモ前または打牌後）
   const ukeire13 = hand.length === 13 ? calcUkeireFor13Tiles(hand) : null;
 
@@ -38,12 +39,22 @@ export const HandView: React.FC<HandViewProps> = ({
   // 和了可能かどうか
   const winCheck = fullTiles.length === 14 ? checkWinningHand(fullTiles) : { isWin: false };
 
+  // リーチ可能判定: 門前かつシャンテン数0（テンパイ）かつ未リーチかつ持ち点1000以上
+  const isMenzen = melds.every((m) => m.type === 'ankan');
+  const canDeclareRiichi =
+    isMyTurn &&
+    isMenzen &&
+    !isRiichi &&
+    shantenRes.shanten === 0 &&
+    score >= 1000;
+
   const handleTileClick = (tileId: string) => {
     if (!isMyTurn) return;
     if (selectedTileId === tileId) {
-      // 2回クリックで即打牌
-      onDiscard(tileId, drawnTile?.id === tileId);
+      // 2回クリックで打牌
+      onDiscard(tileId, drawnTile?.id === tileId, isRiichiSelected);
       setSelectedTileId(null);
+      setIsRiichiSelected(false);
     } else {
       setSelectedTileId(tileId);
     }
@@ -100,7 +111,7 @@ export const HandView: React.FC<HandViewProps> = ({
           )}
         </div>
 
-        {/* 打牌・アガリ操作ボタン */}
+        {/* 打牌・アガリ・リーチ操作ボタン */}
         <div className="flex items-center gap-2">
           {winCheck.isWin && isMyTurn && onDeclareTsumoWin && (
             <button
@@ -113,17 +124,37 @@ export const HandView: React.FC<HandViewProps> = ({
             </button>
           )}
 
+          {canDeclareRiichi && (
+            <button
+              type="button"
+              onClick={() => setIsRiichiSelected(!isRiichiSelected)}
+              className={`flex items-center gap-1 px-3 py-1.5 font-bold rounded-lg text-xs transition shadow ${
+                isRiichiSelected
+                  ? 'bg-rose-600 text-white ring-2 ring-rose-400 animate-pulse'
+                  : 'bg-rose-950/80 hover:bg-rose-900 border border-rose-600/60 text-rose-300'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5" />
+              {isRiichiSelected ? 'リーチ宣言中 (牌を選択)' : 'リーチ'}
+            </button>
+          )}
+
           {selectedTileId && isMyTurn && (
             <button
               type="button"
               onClick={() => {
                 const isTsumo = drawnTile?.id === selectedTileId;
-                onDiscard(selectedTileId, isTsumo);
+                onDiscard(selectedTileId, isTsumo, isRiichiSelected);
                 setSelectedTileId(null);
+                setIsRiichiSelected(false);
               }}
-              className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg shadow text-xs transition"
+              className={`px-3.5 py-1.5 font-bold rounded-lg shadow text-xs transition ${
+                isRiichiSelected
+                  ? 'bg-rose-600 hover:bg-rose-500 text-white'
+                  : 'bg-rose-600 hover:bg-rose-500 text-white'
+              }`}
             >
-              選択した牌を切る
+              {isRiichiSelected ? 'リーチして切る' : '選択した牌を切る'}
             </button>
           )}
 
@@ -131,8 +162,9 @@ export const HandView: React.FC<HandViewProps> = ({
             <button
               type="button"
               onClick={() => {
-                onDiscard(drawnTile.id, true);
+                onDiscard(drawnTile.id, true, isRiichiSelected);
                 setSelectedTileId(null);
+                setIsRiichiSelected(false);
               }}
               className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-medium rounded-lg text-xs transition"
             >

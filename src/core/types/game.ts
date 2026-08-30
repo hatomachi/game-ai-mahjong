@@ -1,4 +1,6 @@
 import { Tile, DiscardTile, Meld } from './tile';
+import { ScoreCalculationResult } from '../scoring/types';
+import { AvailableMelds } from '../meld/meldChecker';
 
 export type Wind = 'east' | 'south' | 'west' | 'north';
 
@@ -22,7 +24,11 @@ export interface PlayerState {
   melds: Meld[];
   isRiichi: boolean;
   riichiTurn?: number;
+  isIppatsu?: boolean;
   isTenpai?: boolean;
+  isFuriten?: boolean;
+  isTemporaryFuriten?: boolean;
+  isRiichiFuriten?: boolean;
 }
 
 export interface RoundResult {
@@ -30,6 +36,16 @@ export interface RoundResult {
   winnerIndex?: number;
   loserIndex?: number;
   message: string;
+  scoreResult?: ScoreCalculationResult;
+  tenpaiPlayerIndices?: number[];
+  scoreChanges?: [number, number, number, number];
+}
+
+export interface PendingAction {
+  playerIndex: number;
+  availableMelds: AvailableMelds;
+  canRon: boolean;
+  ronScoreResult?: ScoreCalculationResult;
 }
 
 export interface GameState {
@@ -50,6 +66,6 @@ export interface GameState {
     tile: Tile;
     isTsumogiri: boolean;
   };
+  pendingActions?: PendingAction[]; // 他家の打牌に対して鳴き/ロン可能なアクション待ち
   roundResult?: RoundResult;
 }
-

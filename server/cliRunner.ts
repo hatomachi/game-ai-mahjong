@@ -28,7 +28,7 @@ export async function checkCommandExists(cmd: string): Promise<boolean> {
 /**
  * ルールベースの牌読み・局面分析回答（CLIがオフラインの場合の高品質フォールバック）
  */
-function generateFallbackReply(prompt: string, question: string): string {
+function generateFallbackReply(_prompt: string, question: string): string {
   // 質問カテゴリの判定
   const isDiscardQuestion = question.includes('何を切る') || question.includes('おすすめ') || question.includes('打牌');
   const isDefenseQuestion = question.includes('危険') || question.includes('安全') || question.includes('安牌') || question.includes('スジ') || question.includes('カベ');

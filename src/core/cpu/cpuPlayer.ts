@@ -1,38 +1,73 @@
 import { Tile } from '../types/tile';
 import { calcUkeireForDiscards } from '../shanten/ukeire';
+import { PlayerState } from '../types/game';
+import { PendingAction } from '../types/game';
 
 export interface CpuDecision {
   discardTile: Tile;
   isTsumogiri: boolean;
   shanten: number;
   totalUkeireCount: number;
+  declareRiichi?: boolean;
 }
 
 /**
  * 簡易CPUの打牌選択ロジック
- * 1. シャンテン数が最小になる牌
- * 2. 受け入れ枚数が最大になる牌
- * 3. 受け入れが同じ場合、孤立した字牌(東南西北白發中) -> 1/9端牌 -> その他 の優先度で打牌
+ * PlayerState または (hand, drawnTile) の両方に対応
  */
 export function decideCpuDiscard(
-  hand: Tile[],
-  drawnTile: Tile,
+  playerOrHand: PlayerState | Tile[],
+  drawnTileOrVisible?: Tile | number[],
   visibleCounts?: number[]
 ): CpuDecision {
+  let hand: Tile[];
+  let drawnTile: Tile;
+  let isRiichi = false;
+  let score = 25000;
+  let isMenzen = true;
+  let actualVisible: number[] | undefined = undefined;
+
+  if (Array.isArray(playerOrHand)) {
+    hand = playerOrHand;
+    drawnTile = drawnTileOrVisible as Tile;
+    actualVisible = visibleCounts;
+  } else {
+    const player = playerOrHand;
+    if (!player.drawnTile) {
+      throw new Error('CPU has no drawn tile to discard');
+    }
+    hand = player.hand;
+    drawnTile = player.drawnTile;
+    isRiichi = player.isRiichi;
+    score = player.score;
+    isMenzen = player.melds.every((m) => m.type === 'ankan');
+    actualVisible = Array.isArray(drawnTileOrVisible) ? drawnTileOrVisible : undefined;
+  }
+
+  // リーチ中の場合は即ツモ切り
+  if (isRiichi) {
+    return {
+      discardTile: drawnTile,
+      isTsumogiri: true,
+      shanten: 0,
+      totalUkeireCount: 0,
+      declareRiichi: false,
+    };
+  }
+
   const fullHand = [...hand, drawnTile];
-  const candidates = calcUkeireForDiscards(fullHand, visibleCounts);
+  const candidates = calcUkeireForDiscards(fullHand, actualVisible);
 
   if (candidates.length === 0) {
-    // フォールバック: ツモ切り
     return {
       discardTile: drawnTile,
       isTsumogiri: true,
       shanten: 8,
       totalUkeireCount: 0,
+      declareRiichi: false,
     };
   }
 
-  // 最良のシャンテン数と受け入れ枚数を取得
   const bestCandidate = candidates[0];
   const topCandidates = candidates.filter(
     (c) =>
@@ -40,11 +75,10 @@ export function decideCpuDiscard(
       c.totalUkeireCount === bestCandidate.totalUkeireCount
   );
 
-  // 同点候補の中から不要牌（字牌 > 1,9端牌 > その他）を優先
   const getDiscardWeight = (tile: Tile): number => {
     if (tile.suit === 'honor') return 100;
     if (tile.value === 1 || tile.value === 9) return 50;
-    return 10 - Math.abs(5 - tile.value); // 5に近いほど危険・価値が高いのでウェイト低
+    return 10 - Math.abs(5 - tile.value);
   };
 
   let chosen = topCandidates[0];
@@ -60,10 +94,34 @@ export function decideCpuDiscard(
 
   const isTsumogiri = chosen.discardTile.id === drawnTile.id;
 
+  // リーチ判定: 門前かつシャンテン数0（テンパイ）かつ持ち点1000以上
+  const canRiichi = isMenzen && !isRiichi && chosen.shantenAfterDiscard === 0 && score >= 1000;
+
   return {
     discardTile: chosen.discardTile,
     isTsumogiri,
     shanten: chosen.shantenAfterDiscard,
     totalUkeireCount: chosen.totalUkeireCount,
+    declareRiichi: canRiichi,
   };
+}
+
+/**
+ * CPUが他家の打牌に対して鳴き/ロンするかを判断
+ */
+export function decideCpuAction(action: PendingAction): 'ron' | 'pon' | 'chi' | 'pass' {
+  // ロン可能なら必ずロン
+  if (action.canRon && action.ronScoreResult) {
+    return 'ron';
+  }
+
+  // 役牌のポンや簡単な鳴き
+  if (action.availableMelds.canPon) {
+    const target = action.availableMelds.ponOption?.targetTile;
+    if (target && target.suit === 'honor' && target.value >= 5) {
+      return 'pon';
+    }
+  }
+
+  return 'pass';
 }

@@ -47,18 +47,26 @@ export const DiscardRiver: React.FC<DiscardRiverProps> = ({
           </div>
         ) : (
           rows.map((row, rIdx) => (
-            <div key={rIdx} className="flex gap-1 flex-wrap min-h-[22px]">
+            <div key={rIdx} className="flex gap-1 items-center min-h-[22px]">
               {row.map((d, cIdx) => {
                 const globalIdx = rIdx * 6 + cIdx;
+                const isCalled = d.isCalled;
+                const isRiichi = d.isRiichiDeclaration;
+
                 return (
-                  <div key={globalIdx} className="relative group">
+                  <div
+                    key={globalIdx}
+                    className={`relative group transition-opacity ${
+                      isCalled ? 'opacity-30 grayscale' : 'opacity-100'
+                    } ${isRiichi ? 'transform rotate-90 scale-90 mx-0.5' : ''}`}
+                  >
                     <TileView tile={d.tile} size="sm" />
-                    {d.isRiichiDeclaration && (
-                      <span className="absolute -top-1.5 -right-1 bg-rose-600 text-white text-[7px] px-0.5 rounded font-bold shadow">
+                    {isRiichi && (
+                      <span className="absolute -top-1 -right-1 bg-rose-600 text-white text-[7px] px-0.5 rounded font-bold shadow">
                         立
                       </span>
                     )}
-                    {d.isTsumogiri && (
+                    {d.isTsumogiri && !isCalled && (
                       <span
                         className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-sky-400 rounded-full ring-1 ring-slate-900"
                         title="ツモ切り"

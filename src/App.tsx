@@ -7,7 +7,9 @@ import {
   cpuStepAction,
   declareTsumoWin,
   advanceToNextRound,
+  resolvePendingAction,
 } from './core/game/gameEngine';
+import { ChiOption } from './core/meld/meldChecker';
 import { sanitizeForPlayer } from './ai/types/context';
 import { MahjongTable } from './components/MahjongTable';
 import { AICoachPanel } from './components/AICoachPanel';
@@ -28,7 +30,6 @@ export default function App() {
 
     const activePlayer = gameState.players[gameState.activePlayerIndex];
     if (!activePlayer.isHuman) {
-      // CPU手番の場合、短いディレイを挟んで打牌を実行
       const delay = isAutoPlay ? 400 : 700;
       const timer = setTimeout(() => {
         setGameState((prev) => cpuStepAction(prev));
@@ -39,8 +40,16 @@ export default function App() {
   }, [gameState, isAutoPlay]);
 
   // 人間手番での打牌ハンドラー
-  const handlePlayerDiscard = (tileId: string) => {
-    setGameState((prev) => playerDiscardAction(prev, 0, tileId));
+  const handlePlayerDiscard = (tileId: string, _isTsumo: boolean, declareRiichi?: boolean) => {
+    setGameState((prev) => playerDiscardAction(prev, 0, tileId, declareRiichi));
+  };
+
+  // アクション（ロン、ポン、チー、カン、パス）の解決ハンドラー
+  const handleResolveAction = (
+    actionType: 'ron' | 'pon' | 'chi' | 'daiminkan' | 'pass',
+    selectedChiOption?: ChiOption
+  ) => {
+    setGameState((prev) => resolvePendingAction(prev, 0, actionType, selectedChiOption));
   };
 
   // ツモ和了ハンドラー
@@ -287,6 +296,7 @@ export default function App() {
           onNextRound={handleNextRound}
           onPlayerDiscard={handlePlayerDiscard}
           onDeclareTsumoWin={handleDeclareTsumoWin}
+          onResolveAction={handleResolveAction}
           onLoadScenario={handleLoadScenario}
         />
       </div>
