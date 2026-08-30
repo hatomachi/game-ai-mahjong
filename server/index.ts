@@ -65,6 +65,8 @@ app.post('/api/coach/chat', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`🀄 AI Mahjong Coach CLI Bridge Server running on http://localhost:${PORT}`);
+const HOST = '0.0.0.0';
+
+app.listen(Number(PORT), HOST, () => {
+  console.log(`🀄 AI Mahjong Coach CLI Bridge Server running on http://${HOST}:${PORT}`);
 });

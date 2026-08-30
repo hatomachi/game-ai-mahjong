@@ -38,16 +38,28 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
 
   // バックエンド状態の取得
   useEffect(() => {
-    fetch('/api/coach/status')
-      .then(res => res.json())
-      .then(data => {
-        if (data.availableBackends) {
-          setAvailableBackends(data.availableBackends);
+    const fetchStatus = async () => {
+      const urls = [
+        'http://localhost:3001/api/coach/status',
+        'http://127.0.0.1:3001/api/coach/status',
+        '/api/coach/status',
+      ];
+      for (const url of urls) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.availableBackends) {
+              setAvailableBackends(data.availableBackends);
+              break;
+            }
+          }
+        } catch {
+          // 次のURLを試す
         }
-      })
-      .catch(() => {
-        // サーバーがまだ起動していない等の場合
-      });
+      }
+    };
+    fetchStatus();
   }, []);
 
   useEffect(() => {
@@ -69,39 +81,60 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
     if (!questionText) setInputQuestion('');
     setIsLoading(true);
 
-    try {
-      const response = await fetch('/api/coach/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: query,
-          context,
-          cliBackend,
-        }),
-      });
+    const endpoints = [
+      'http://localhost:3001/api/coach/chat',
+      'http://127.0.0.1:3001/api/coach/chat',
+      '/api/coach/chat',
+    ];
 
-      const data = await response.json();
+    const requestPayload = {
+      question: query,
+      context,
+      cliBackend,
+    };
 
-      const aiMsg: ChatMessage = {
-        id: `ai_${Date.now()}`,
-        sender: 'ai',
-        text: data.reply || (data.error ? `エラー: ${data.error}` : '回答を取得できませんでした。'),
-        backendUsed: data.backendUsed,
-        timestamp: new Date().toLocaleTimeString(),
-      };
+    let lastError = 'サーバーに接続できませんでした';
+    let success = false;
 
-      setMessages(prev => [...prev, aiMsg]);
-    } catch (err: any) {
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestPayload),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const aiMsg: ChatMessage = {
+            id: `ai_${Date.now()}`,
+            sender: 'ai',
+            text: data.reply || (data.error ? `エラー: ${data.error}` : '回答を取得できませんでした。'),
+            backendUsed: data.backendUsed,
+            timestamp: new Date().toLocaleTimeString(),
+          };
+          setMessages(prev => [...prev, aiMsg]);
+          success = true;
+          break;
+        } else {
+          lastError = `HTTP ${response.status}: ${response.statusText}`;
+        }
+      } catch (err: any) {
+        lastError = err.message;
+      }
+    }
+
+    if (!success) {
       const errorMsg: ChatMessage = {
         id: `err_${Date.now()}`,
         sender: 'system',
-        text: `通信エラー: サーバーとの接続に失敗しました (${err.message})。`,
+        text: `通信エラー: サーバーとの接続に失敗しました (${lastError})。`,
         timestamp: new Date().toLocaleTimeString(),
       };
       setMessages(prev => [...prev, errorMsg]);
-    } finally {
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
   };
 
   const quickQuestions = [
