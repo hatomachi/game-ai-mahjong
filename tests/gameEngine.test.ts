@@ -67,7 +67,7 @@ describe('GameEngine (4人対局ゲームループ)', () => {
     state = cpuStepAction(state); // 2 -> 3
     state = cpuStepAction(state); // 3 -> (waiting_action or 0)
 
-    if (state.phase === 'waiting_action') {
+    while (state.phase === 'waiting_action') {
       state = resolvePendingAction(state, 0, 'pass');
     }
 

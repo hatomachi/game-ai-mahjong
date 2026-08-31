@@ -1,13 +1,14 @@
 import React from 'react';
 import { GameState } from '../core/types/game';
-import { TileView } from './TileView';
+import { MahjongTile } from './tiles/MahjongTile';
 import { HandView } from './HandView';
-import { DiscardRiver } from './DiscardRiver';
+import { PlayerRiver } from './table/PlayerRiver';
+import { CenterSquare } from './table/CenterSquare';
 import { GameControls } from './GameControls';
 import { MeldsView } from './MeldsView';
 import { ActionDialog } from './ActionDialog';
 import { RoundResultModal } from './RoundResultModal';
-import { User, Cpu, Flame, Layers, Zap } from 'lucide-react';
+import { User, Cpu, Zap } from 'lucide-react';
 import { ChiOption } from '../core/meld/meldChecker';
 
 interface MahjongTableProps {
@@ -59,74 +60,67 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
 
   const humanPendingAction = gameState.pendingActions?.find((a) => a.playerIndex === 0);
 
-  // 伏せ牌を描画するヘルパー
-  const renderHiddenTiles = (count: number, hasDrawn: boolean = false) => {
+  // 横向き・直立の他家手牌（伏せ牌）レンダリング
+  const renderOpponentStandingHand = (count: number, hasDrawn: boolean = false, isVertical: boolean = false) => {
+    if (isVertical) {
+      return (
+        <div className="flex flex-col gap-0.5 items-center">
+          {Array.from({ length: count }).map((_, i) => (
+            <MahjongTile key={i} size="xs" hidden={true} isStanding={true} orientation="left" />
+          ))}
+          {hasDrawn && (
+            <div className="mt-1.5 ring-1 ring-amber-400 rounded-sm">
+              <MahjongTile size="xs" hidden={true} isStanding={true} orientation="left" />
+            </div>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="flex items-center gap-0.5">
         {Array.from({ length: count }).map((_, i) => (
-          <div
-            key={i}
-            className="w-4 h-6 bg-gradient-to-b from-amber-700 to-amber-900 rounded-sm border border-amber-950 shadow-sm"
-          />
+          <MahjongTile key={i} size="xs" hidden={true} isStanding={true} />
         ))}
         {hasDrawn && (
-          <div className="w-4 h-6 ml-1.5 bg-gradient-to-b from-amber-600 to-amber-800 rounded-sm border border-amber-500 shadow-md ring-1 ring-amber-400" />
+          <div className="ml-1.5 ring-1 ring-amber-400 rounded-sm">
+            <MahjongTile size="xs" hidden={true} isStanding={true} />
+          </div>
         )}
       </div>
     );
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 text-slate-100 p-3 space-y-3 overflow-y-auto relative">
-      {/* 1. 上部コントロール & 局情報バー */}
+    <div className="flex flex-col h-full bg-[#070d09] text-slate-100 p-2 sm:p-3 space-y-2.5 overflow-y-auto relative select-none">
+      {/* 1. 上部コントロールバー */}
       <div className="flex items-center justify-between flex-wrap gap-2 bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 shadow-md">
         <div className="flex items-center gap-3 text-xs flex-wrap">
-          <div className="font-black text-base text-amber-400 flex items-center gap-1.5 bg-amber-950/40 px-2.5 py-1 rounded-lg border border-amber-600/40">
+          <div className="font-black text-base text-amber-400 flex items-center gap-1.5 bg-amber-950/40 px-3 py-1 rounded-lg border border-amber-600/40">
             <span>
               {gameState.roundWind === 'east' ? '東' : '南'}
               {gameState.roundNumber}局
             </span>
-            <span className="text-xs font-normal text-slate-400">
+            <span className="text-xs font-normal text-slate-300">
               ({gameState.honba}本場)
             </span>
           </div>
 
-          {/* 供託リーチ棒表示 */}
+          {/* 供託表示 */}
           {gameState.riichiSticks > 0 && (
-            <div className="flex items-center gap-1 bg-rose-950/60 px-2 py-1 rounded-lg border border-rose-600/50 text-rose-300 text-xs font-bold">
-              <Zap className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+            <div className="flex items-center gap-1 bg-rose-950/80 px-2 py-1 rounded-lg border border-rose-600/50 text-rose-300 text-xs font-bold shadow animate-pulse">
+              <Zap className="w-3.5 h-3.5 text-rose-400" />
               <span>供託: {gameState.riichiSticks * 1000}点</span>
             </div>
           )}
 
-          <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
-            <span className="text-slate-400 text-[11px] flex items-center gap-1">
-              <Flame className="w-3.5 h-3.5 text-amber-500" />
-              ドラ:
-            </span>
-            <div className="flex gap-1">
-              {gameState.doraMarkers.length > 0 ? (
-                gameState.doraMarkers.map((d, i) => (
-                  <TileView key={i} tile={d} size="sm" />
-                ))
-              ) : (
-                <span className="text-[10px] text-slate-600">未設定</span>
-              )}
-            </div>
-          </div>
-
-          <div className="text-[11px] text-slate-400 flex items-center gap-2">
-            <span className="flex items-center gap-1">
-              <Layers className="w-3.5 h-3.5 text-emerald-400" />
-              残り山:
-              <span className="font-mono text-emerald-400 font-bold">
-                {gameState.wall.length}
-              </span>
-              枚
+          <div className="text-[11px] text-slate-300 flex items-center gap-2">
+            <span>
+              残り牌: <span className="font-mono text-emerald-400 font-bold">{gameState.wall.length}</span>枚
             </span>
             <span>/</span>
             <span>
-              巡目: <span className="font-mono text-slate-200 font-bold">{gameState.turnCount}</span>
+              巡目: <span className="font-mono text-slate-100 font-bold">{gameState.turnCount}</span>
             </span>
           </div>
         </div>
@@ -148,31 +142,35 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
               <button
                 type="button"
                 onClick={() => onLoadScenario('riichi_defense')}
-                className="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 rounded text-[11px] transition"
+                className="px-2 py-1 bg-rose-950/70 hover:bg-rose-900 border border-rose-800 text-rose-300 rounded text-[11px] transition shadow"
               >
-                牌読み
+                牌読み相談
               </button>
               <button
                 type="button"
                 onClick={() => onLoadScenario('tenpai_choice')}
-                className="px-2 py-1 bg-amber-950/60 hover:bg-amber-900 border border-amber-800 text-amber-300 rounded text-[11px] transition"
+                className="px-2 py-1 bg-amber-950/70 hover:bg-amber-900 border border-amber-800 text-amber-300 rounded text-[11px] transition shadow"
               >
-                何切る
+                何切る相談
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* 2. 四方麻雀卓グラフィック */}
-      <div className="relative flex-1 min-h-[440px] rounded-2xl bg-gradient-to-b from-[#184427] to-[#102e1a] border-4 border-amber-950 shadow-inner p-3 flex flex-col justify-between">
-        {/* (A) 対面 (CPU-2) - 上側 */}
-        <div className="flex items-center justify-between border-b border-emerald-800/40 pb-2 px-2">
-          <div className="flex items-center gap-2">
+      {/* 2. 四方リアル麻雀卓グラフィック（木製フレーム ＋ 深緑フェルト） */}
+      <div className="relative flex-1 min-h-[520px] rounded-3xl bg-gradient-to-b from-[#0b3318] via-[#092b14] to-[#061d0d] border-[6px] border-[#2e180d] shadow-[inset_0_0_40px_rgba(0,0,0,0.8),0_10px_30px_rgba(0,0,0,0.6)] p-3 flex flex-col justify-between overflow-hidden">
+        {/* フェルト布地のマット感グラデーション */}
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(18,84,40,0.3)_0%,rgba(0,0,0,0.5)_100%)]" />
+
+        {/* (A) 対面 (CPU-2) - 奥・上側 */}
+        <div className="relative z-10 flex items-start justify-between border-b border-emerald-800/30 pb-2 px-3">
+          {/* 対面プレイヤー情報 */}
+          <div className="flex items-center gap-2 bg-slate-950/70 px-3 py-1.5 rounded-xl border border-emerald-800/40 shadow-md">
             <div
-              className={`p-1 rounded border transition-colors ${
+              className={`p-1 rounded-lg border transition-all ${
                 gameState.activePlayerIndex === 2
-                  ? 'bg-amber-500/20 border-amber-400 text-amber-300 ring-2 ring-amber-400/50'
+                  ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-400 animate-pulse'
                   : 'bg-emerald-950 border-emerald-700/50 text-emerald-400'
               }`}
             >
@@ -182,140 +180,133 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
               <div className="text-xs font-bold text-emerald-100 flex items-center gap-1.5">
                 <span>{toimen.name} ({getWindJa(toimen.seatWind)}家)</span>
                 {toimen.isRiichi && (
-                  <span className="bg-rose-600 text-white text-[8px] px-1 rounded animate-pulse font-black">
+                  <span className="bg-rose-600 text-white text-[8px] px-1 py-0.2 rounded font-black shadow animate-pulse">
                     立直
                   </span>
                 )}
               </div>
-              <div className="text-[10px] text-emerald-400 font-mono font-bold">
-                {toimen.score}点
+              <div className="text-[11px] text-amber-300 font-mono font-bold">
+                {toimen.score.toLocaleString()}点
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col gap-1 items-end">
-              {renderHiddenTiles(toimen.hand.length, !!toimen.drawnTile)}
-              <MeldsView melds={toimen.melds} size="sm" />
+          {/* 対面の手牌 & 副露牌 */}
+          <div className="flex flex-col gap-1.5 items-end">
+            <div className="flex items-center gap-3">
+              {toimen.melds.length > 0 && <MeldsView melds={toimen.melds} size="xs" />}
+              {renderOpponentStandingHand(toimen.hand.length, !!toimen.drawnTile)}
             </div>
-            <div className="w-44">
-              <DiscardRiver
-                discards={toimen.discards}
-                playerName={toimen.name}
-                isCurrentPlayer={gameState.activePlayerIndex === 2}
+          </div>
+        </div>
+
+        {/* (B) 卓中央エリア: 上家(左) - 河・中央センターボックス・河 - 下家(右) */}
+        <div className="relative z-10 grid grid-cols-12 gap-2 my-auto items-center">
+          {/* 上家エリア (CPU-3 / 左) */}
+          <div className="col-span-3 flex items-center gap-2">
+            {/* 上家手牌（縦並び） */}
+            <div className="hidden sm:block">
+              {renderOpponentStandingHand(kamicha.hand.length, !!kamicha.drawnTile, true)}
+            </div>
+
+            {/* 上家情報 & 河 */}
+            <div className="flex flex-col gap-1.5 flex-1">
+              <div className="flex items-center justify-between bg-slate-950/70 p-1.5 rounded-lg border border-emerald-800/40">
+                <span className="text-[10px] font-bold text-emerald-100 flex items-center gap-1">
+                  <Cpu className="w-3 h-3 text-emerald-400" />
+                  {kamicha.name} ({getWindJa(kamicha.seatWind)})
+                </span>
+                <span className="text-[10px] font-mono text-amber-300 font-bold">
+                  {kamicha.score.toLocaleString()}
+                </span>
+              </div>
+              {kamicha.melds.length > 0 && <MeldsView melds={kamicha.melds} size="xs" />}
+              <PlayerRiver
+                discards={kamicha.discards}
+                playerName={kamicha.name}
+                position="left"
+                isCurrentPlayer={gameState.activePlayerIndex === 3}
+                size="sm"
               />
             </div>
           </div>
-        </div>
 
-        {/* (B) 卓中央: 上家(左) - 中央卓情報 - 下家(右) */}
-        <div className="grid grid-cols-12 gap-2 my-2 items-center">
-          {/* 上家 (CPU-3 / 左) */}
-          <div className="col-span-4 flex flex-col gap-1.5 p-2 bg-emerald-950/40 rounded-xl border border-emerald-800/30">
-            <div className="flex items-center justify-between text-xs font-bold text-emerald-100">
-              <span className="flex items-center gap-1">
-                <Cpu className="w-3.5 h-3.5 text-emerald-400" />
-                {kamicha.name} ({getWindJa(kamicha.seatWind)}家)
-              </span>
-              <div className="flex items-center gap-1">
-                {kamicha.isRiichi && (
-                  <span className="bg-rose-600 text-white text-[8px] px-1 rounded animate-pulse font-black">
-                    立直
-                  </span>
-                )}
-                <span className="font-mono text-[10px] text-emerald-400">{kamicha.score}点</span>
-              </div>
+          {/* 卓中央（対面の河 + センターボックス + 自家の河） */}
+          <div className="col-span-6 flex flex-col items-center justify-center gap-2">
+            {/* 対面の河 (画面奥・上) */}
+            <div className="w-full max-w-[280px]">
+              <PlayerRiver
+                discards={toimen.discards}
+                playerName={toimen.name}
+                position="top"
+                isCurrentPlayer={gameState.activePlayerIndex === 2}
+                size="sm"
+              />
             </div>
-            <div className="py-1 flex flex-col gap-1">
-              {renderHiddenTiles(kamicha.hand.length, !!kamicha.drawnTile)}
-              <MeldsView melds={kamicha.melds} size="sm" />
+
+            {/* 中央センターボックス（局数・LED・王牌/カン山・リーチ棒・本場棒） */}
+            <CenterSquare gameState={gameState} />
+
+            {/* 自家の河 (画面手前・下) */}
+            <div className="w-full max-w-[280px]">
+              <PlayerRiver
+                discards={me.discards}
+                playerName="自家 (あなた)"
+                position="bottom"
+                isCurrentPlayer={gameState.activePlayerIndex === 0}
+                size="sm"
+              />
             </div>
-            <DiscardRiver
-              discards={kamicha.discards}
-              playerName={kamicha.name}
-              isCurrentPlayer={gameState.activePlayerIndex === 3}
-            />
           </div>
 
-          {/* 中央卓情報パネル */}
-          <div className="col-span-4 flex flex-col items-center justify-center p-3 bg-slate-950/80 rounded-xl border border-emerald-700/50 shadow-lg text-center space-y-1">
-            <div className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">
-              Mahjong Arena
-            </div>
-            <div className="text-sm font-black text-amber-300">
-              {gameState.roundWind === 'east' ? '東' : '南'}
-              {gameState.roundNumber}局
-            </div>
-            <div className="text-[11px] text-slate-400">
-              手番: <span className="font-bold text-amber-400">{gameState.players[gameState.activePlayerIndex]?.name}</span>
-            </div>
-            {gameState.lastDiscard && (
-              <div className="text-[10px] text-slate-300 flex items-center gap-1 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 mt-1">
-                <span>直前の捨て牌:</span>
-                <TileView tile={gameState.lastDiscard.tile} size="sm" />
+          {/* 下家エリア (CPU-1 / 右) */}
+          <div className="col-span-3 flex items-center gap-2 justify-end">
+            {/* 下家情報 & 河 */}
+            <div className="flex flex-col gap-1.5 flex-1">
+              <div className="flex items-center justify-between bg-slate-950/70 p-1.5 rounded-lg border border-emerald-800/40">
+                <span className="text-[10px] font-bold text-emerald-100 flex items-center gap-1">
+                  <Cpu className="w-3 h-3 text-emerald-400" />
+                  {shimocha.name} ({getWindJa(shimocha.seatWind)})
+                </span>
+                <span className="text-[10px] font-mono text-amber-300 font-bold">
+                  {shimocha.score.toLocaleString()}
+                </span>
               </div>
-            )}
-            {gameState.roundResult && (
-              <div className="mt-2 px-3 py-1 bg-rose-600/30 border border-rose-500 text-rose-200 text-xs font-bold rounded-lg animate-pulse">
-                {gameState.roundResult.message}
-              </div>
-            )}
-          </div>
+              {shimocha.melds.length > 0 && <MeldsView melds={shimocha.melds} size="xs" />}
+              <PlayerRiver
+                discards={shimocha.discards}
+                playerName={shimocha.name}
+                position="right"
+                isCurrentPlayer={gameState.activePlayerIndex === 1}
+                size="sm"
+              />
+            </div>
 
-          {/* 下家 (CPU-1 / 右) */}
-          <div className="col-span-4 flex flex-col gap-1.5 p-2 bg-emerald-950/40 rounded-xl border border-emerald-800/30">
-            <div className="flex items-center justify-between text-xs font-bold text-emerald-100">
-              <span className="flex items-center gap-1">
-                <Cpu className="w-3.5 h-3.5 text-emerald-400" />
-                {shimocha.name} ({getWindJa(shimocha.seatWind)}家)
-              </span>
-              <div className="flex items-center gap-1">
-                {shimocha.isRiichi && (
-                  <span className="bg-rose-600 text-white text-[8px] px-1 rounded animate-pulse font-black">
-                    立直
-                  </span>
-                )}
-                <span className="font-mono text-[10px] text-emerald-400">{shimocha.score}点</span>
-              </div>
+            {/* 下家手牌（縦並び） */}
+            <div className="hidden sm:block">
+              {renderOpponentStandingHand(shimocha.hand.length, !!shimocha.drawnTile, true)}
             </div>
-            <div className="py-1 flex flex-col gap-1">
-              {renderHiddenTiles(shimocha.hand.length, !!shimocha.drawnTile)}
-              <MeldsView melds={shimocha.melds} size="sm" />
-            </div>
-            <DiscardRiver
-              discards={shimocha.discards}
-              playerName={shimocha.name}
-              isCurrentPlayer={gameState.activePlayerIndex === 1}
-            />
           </div>
         </div>
 
-        {/* (C) 自家の河 (手前) */}
-        <div className="w-full max-w-lg mx-auto mb-1">
-          <DiscardRiver
-            discards={me.discards}
-            playerName="自家 (あなた) の河"
-            isCurrentPlayer={gameState.activePlayerIndex === 0}
-          />
-        </div>
-
-        {/* 3. 自家の手牌・ツモ牌操作エリア (下部) */}
-        <div className="w-full">
-          <div className="flex items-center justify-between mb-1 px-1">
-            <div className="flex items-center gap-2">
-              <div className="p-1 bg-blue-900/60 text-blue-300 rounded border border-blue-500/40">
+        {/* (C) 自家 (プレイヤー) - 手前・下側 */}
+        <div className="relative z-10 w-full mt-2">
+          {/* 自家ステータスバー & 副露 */}
+          <div className="flex items-center justify-between mb-1.5 px-2">
+            <div className="flex items-center gap-2 bg-slate-950/80 px-3 py-1 rounded-xl border border-blue-600/40 shadow">
+              <div className="p-1 bg-blue-600 text-white rounded-md">
                 <User className="w-3.5 h-3.5" />
               </div>
               <span className="text-xs font-bold text-slate-100">
                 自家 ({getWindJa(me.seatWind)}家)
               </span>
               {me.isRiichi && (
-                <span className="bg-rose-600 text-white text-[8px] px-1.5 py-0.5 rounded font-black animate-pulse">
+                <span className="bg-rose-600 text-white text-[9px] px-1.5 py-0.2 rounded font-black shadow animate-pulse">
                   立直中
                 </span>
               )}
-              <span className="text-xs font-mono text-amber-400 font-bold">
-                {me.score}点
+              <span className="text-xs font-mono text-amber-400 font-black">
+                {me.score.toLocaleString()}点
               </span>
             </div>
 
@@ -323,6 +314,7 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
             {me.melds.length > 0 && <MeldsView melds={me.melds} size="sm" />}
           </div>
 
+          {/* 自家手牌コンポーネント（高級木製スタンド・立体牌・操作ボタン） */}
           <HandView
             player={me}
             isMyTurn={isMyTurn}
@@ -332,7 +324,7 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
         </div>
       </div>
 
-      {/* 4. 他家の打牌に対するアクション選択ダイアログ */}
+      {/* 3. 他家の打牌に対するアクション選択ダイアログ (ポン/チー/ロン/カン) */}
       {humanPendingAction && gameState.phase === 'waiting_action' && (
         <ActionDialog
           pendingAction={humanPendingAction}
@@ -340,7 +332,7 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
         />
       )}
 
-      {/* 5. 局終了・ゲーム終了リザルトモーダル */}
+      {/* 4. 局終了・ゲーム終了リザルトモーダル */}
       {(gameState.phase === 'round_end' || gameState.phase === 'game_over') && (
         <RoundResultModal
           gameState={gameState}

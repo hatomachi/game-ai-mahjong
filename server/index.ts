@@ -49,8 +49,8 @@ app.post('/api/coach/chat', async (req, res) => {
     // 局面テキスト（プロンプト）を生成
     const prompt = buildMahjongCoachPrompt(context, question);
 
-    // CLI実行
-    const result = await runCLI(prompt, cliBackend);
+    // CLI実行 (または高精度盤面分析)
+    const result = await runCLI(prompt, question, context, cliBackend);
 
     res.json({
       ...result,
