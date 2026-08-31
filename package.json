@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev:web": "vite",
-    "dev:server": "tsx server/index.ts",
-    "dev": "concurrently -k -n \"WEB,SRV\" -c \"cyan,magenta\" \"npm run dev:web\" \"npm run dev:server\"",
+    "dev:server": "tsx watch server/index.ts",
+    "dev": "concurrently -n \"WEB,SRV\" -c \"cyan,magenta\" \"npm run dev:web\" \"npm run dev:server\"",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",

@@ -39,6 +39,8 @@ app.post('/api/coach/chat', async (req, res) => {
       cliBackend?: CLIBackend;
     };
 
+    console.log(`\n🀄 [API Request] /api/coach/chat received: "${question}" (backend: ${cliBackend})`);
+
     if (!question || !context) {
       return res.status(400).json({
         success: false,
@@ -49,8 +51,10 @@ app.post('/api/coach/chat', async (req, res) => {
     // 局面テキスト（プロンプト）を生成
     const prompt = buildMahjongCoachPrompt(context, question);
 
-    // CLI実行 (または高精度盤面分析)
+    // CLI実行 (agy / claude)
     const result = await runCLI(prompt, question, context, cliBackend);
+
+    console.log(`🀄 [API Response] Completed in ${result.executionTimeMs}ms (Backend used: ${result.backendUsed})`);
 
     res.json({
       ...result,

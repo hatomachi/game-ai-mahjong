@@ -40,9 +40,9 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
   // バックエンド状態の取得 & サーバー疎通確認
   const checkServerStatus = async () => {
     const urls = [
-      '/api/coach/status',
       'http://localhost:3001/api/coach/status',
       'http://127.0.0.1:3001/api/coach/status',
+      '/api/coach/status',
     ];
     for (const url of urls) {
       try {
@@ -88,9 +88,9 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
     setIsLoading(true);
 
     const endpoints = [
-      '/api/coach/chat',
       'http://localhost:3001/api/coach/chat',
       'http://127.0.0.1:3001/api/coach/chat',
+      '/api/coach/chat',
     ];
 
     const requestPayload = {
