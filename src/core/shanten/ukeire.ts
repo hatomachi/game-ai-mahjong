@@ -53,7 +53,6 @@ export function calcUkeireFor13Tiles(
 
     counts[i]--; // 戻す
 
-
     if (canImprove) {
       const tileInfo = indexToTileInfo(i);
       const code = indexToCode(i);

@@ -13,7 +13,7 @@ export async function callClaudeDirect(
 ): Promise<AICoachResponse> {
   const startTime = Date.now();
   const prompt = buildMahjongCoachPrompt(context, question);
-  const targetModel = model || 'claude-3-5-haiku-20241022';
+  const targetModel = model || 'claude-sonnet-5';
 
   const endpoint = 'https://api.anthropic.com/v1/messages';
 

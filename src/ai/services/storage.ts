@@ -5,9 +5,9 @@ const STORAGE_KEY = 'mahjong_ai_coach_settings_v1';
 export const DEFAULT_AI_SETTINGS: AISettings = {
   preferredProvider: 'auto',
   geminiApiKey: '',
-  geminiModel: 'gemini-2.0-flash',
+  geminiModel: 'gemini-3.7-flash',
   claudeApiKey: '',
-  claudeModel: 'claude-3-5-haiku-20241022',
+  claudeModel: 'claude-sonnet-5',
   customProxyUrl: '',
 };
 

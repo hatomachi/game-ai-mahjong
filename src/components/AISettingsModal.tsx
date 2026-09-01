@@ -136,10 +136,9 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClos
                   onChange={(e) => setSettings({ ...settings, geminiModel: e.target.value })}
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
                 >
-                  <option value="gemini-2.0-flash">gemini-2.0-flash (推奨・最新・超高速)</option>
-                  <option value="gemini-2.5-flash">gemini-2.5-flash (実験版)</option>
-                  <option value="gemini-1.5-flash">gemini-1.5-flash (安定版)</option>
-                  <option value="gemini-1.5-pro">gemini-1.5-pro (高精度推論)</option>
+                  <option value="gemini-3.7-flash">gemini-3.7-flash (推奨・最先端推論・思考対応)</option>
+                  <option value="gemini-3.1-pro">gemini-3.1-pro (最高峰フラッグシップ推論)</option>
+                  <option value="gemini-3.5-flash">gemini-3.5-flash (高速・高効率)</option>
                 </select>
               </div>
             </div>
@@ -189,8 +188,9 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClos
                 onChange={(e) => setSettings({ ...settings, claudeModel: e.target.value })}
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
               >
-                <option value="claude-3-5-haiku-20241022">claude-3-5-haiku (推奨・高速・低コスト)</option>
-                <option value="claude-3-5-sonnet-20241022">claude-3-5-sonnet (最高峰の推論精度)</option>
+                <option value="claude-sonnet-5">claude-sonnet-5 (推奨・最新バランス・思考対応)</option>
+                <option value="claude-opus-5">claude-opus-5 (最高峰フラッグシップ推論)</option>
+                <option value="claude-haiku-4.5">claude-haiku-4.5 (超高速・低コスト)</option>
               </select>
             </div>
           </div>

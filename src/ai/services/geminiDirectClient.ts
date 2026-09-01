@@ -13,7 +13,7 @@ export async function callGeminiDirect(
 ): Promise<AICoachResponse> {
   const startTime = Date.now();
   const prompt = buildMahjongCoachPrompt(context, question);
-  const targetModel = model || 'gemini-2.0-flash';
+  const targetModel = model || 'gemini-3.7-flash';
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
 

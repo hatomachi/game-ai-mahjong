@@ -39,8 +39,8 @@ describe('Ukeire (有効牌・受け入れ計算)', () => {
   });
 
   it('14枚手牌の何切る分析で受け入れ最大打牌がトップにソートされる', () => {
-    // 123m 456p 789s 11z 23m + 9z (14枚)
-    // 9z を切れば 1m/4m の両面テンパイ (受け入れ7枚) になる
+    // 123m 456p 789s 11z 23m + 7z (14枚)
+    // 7z を切れば 1m/4m の両面テンパイ (受け入れ7枚) になる
     const hand14 = makeHand([
       '1m', '2m', '3m',
       '4p', '5p', '6p',
@@ -52,7 +52,6 @@ describe('Ukeire (有効牌・受け入れ計算)', () => {
 
     const discards = calcUkeireForDiscards(hand14);
     expect(discards.length).toBeGreaterThan(0);
-    // トップの打牌は 7z (中) で、切った後はテンパイ (shantenAfterDiscard === 0)
     const top = discards[0];
     expect(top.discardTile.suit).toBe('honor');
     expect(top.discardTile.value).toBe(7);
