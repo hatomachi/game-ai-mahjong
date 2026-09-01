@@ -94,29 +94,29 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#070d09] text-slate-100 p-1.5 sm:p-3 space-y-1.5 sm:space-y-2.5 overflow-y-auto pb-16 lg:pb-2 relative select-none">
+    <div className="flex flex-col h-full bg-[#070d09] text-slate-100 p-1 sm:p-2.5 gap-1 sm:gap-1.5 overflow-hidden pb-14 lg:pb-0 relative select-none">
       {/* 1. 上部コントロールバー */}
-      <div className="flex items-center justify-between flex-wrap gap-1.5 sm:gap-2 bg-slate-900/90 p-2 sm:p-2.5 rounded-xl border border-slate-800 shadow-md">
-        <div className="flex items-center gap-1.5 sm:gap-3 text-xs flex-wrap">
-          <div className="font-black text-sm sm:text-base text-amber-400 flex items-center gap-1 bg-amber-950/40 px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg border border-amber-600/40">
+      <div className="flex items-center justify-between flex-wrap gap-1 sm:gap-2 bg-slate-900/90 p-1 sm:p-2 rounded-lg sm:rounded-xl border border-slate-800 shadow-md flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 text-xs flex-wrap">
+          <div className="font-black text-xs sm:text-sm text-amber-400 flex items-center gap-1 bg-amber-950/40 px-1.5 sm:px-2.5 py-0.5 rounded-md sm:rounded-lg border border-amber-600/40">
             <span>
               {gameState.roundWind === 'east' ? '東' : '南'}
               {gameState.roundNumber}局
             </span>
-            <span className="text-[10px] sm:text-xs font-normal text-slate-300">
+            <span className="text-[9px] sm:text-xs font-normal text-slate-300">
               ({gameState.honba}本場)
             </span>
           </div>
 
           {/* 供託表示 */}
           {gameState.riichiSticks > 0 && (
-            <div className="flex items-center gap-1 bg-rose-950/80 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg border border-rose-600/50 text-rose-300 text-[10px] sm:text-xs font-bold shadow animate-pulse">
-              <Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-400" />
-              <span>供託: {gameState.riichiSticks * 1000}点</span>
+            <div className="flex items-center gap-0.5 sm:gap-1 bg-rose-950/80 px-1 sm:px-2 py-0.5 rounded border border-rose-600/50 text-rose-300 text-[9px] sm:text-xs font-bold shadow animate-pulse">
+              <Zap className="w-3 h-3 text-rose-400" />
+              <span>供託: {gameState.riichiSticks * 1000}</span>
             </div>
           )}
 
-          <div className="text-[10px] sm:text-[11px] text-slate-300 flex items-center gap-1.5 sm:gap-2">
+          <div className="text-[9px] sm:text-[11px] text-slate-300 flex items-center gap-1 sm:gap-1.5">
             <span>
               残: <span className="font-mono text-emerald-400 font-bold">{gameState.wall.length}</span>
             </span>
@@ -128,7 +128,7 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
         </div>
 
         {/* コントロールボタン群 */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <GameControls
             phase={gameState.phase}
             isAutoPlay={isAutoPlay}
@@ -140,14 +140,14 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
           />
 
           {onLoadScenario && (
-            <div className="flex items-center gap-1 border-l border-slate-800 pl-1.5">
+            <div className="flex items-center gap-1 border-l border-slate-800 pl-1">
               <button
                 type="button"
                 onClick={() => {
                   onLoadScenario('riichi_defense');
                   onOpenCoach?.();
                 }}
-                className="px-1.5 sm:px-2 py-1 bg-rose-950/70 hover:bg-rose-900 border border-rose-800 text-rose-300 rounded text-[10px] sm:text-[11px] transition shadow"
+                className="px-1.5 py-0.5 sm:py-1 bg-rose-950/70 hover:bg-rose-900 border border-rose-800 text-rose-300 rounded text-[9px] sm:text-[11px] transition shadow"
                 title="リーチ相手への牌読み相談シナリオをロード"
               >
                 牌読み
@@ -158,7 +158,7 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
                   onLoadScenario('tenpai_choice');
                   onOpenCoach?.();
                 }}
-                className="px-1.5 sm:px-2 py-1 bg-amber-950/70 hover:bg-amber-900 border border-amber-800 text-amber-300 rounded text-[10px] sm:text-[11px] transition shadow"
+                className="px-1.5 py-0.5 sm:py-1 bg-amber-950/70 hover:bg-amber-900 border border-amber-800 text-amber-300 rounded text-[9px] sm:text-[11px] transition shadow"
                 title="多面張何切る相談シナリオをロード"
               >
                 何切る
@@ -169,41 +169,41 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
       </div>
 
       {/* 2. 四方リアル麻雀卓グラフィック（木製フレーム ＋ 深緑フェルト） */}
-      <div className="relative flex-1 min-h-[440px] sm:min-h-[520px] rounded-2xl sm:rounded-3xl bg-gradient-to-b from-[#0b3318] via-[#092b14] to-[#061d0d] border-4 sm:border-[6px] border-[#2e180d] shadow-[inset_0_0_40px_rgba(0,0,0,0.8),0_10px_30px_rgba(0,0,0,0.6)] p-1.5 sm:p-3 flex flex-col justify-between overflow-hidden">
+      <div className="relative flex-1 min-h-0 rounded-xl sm:rounded-3xl bg-gradient-to-b from-[#0b3318] via-[#092b14] to-[#061d0d] border-2 sm:border-[5px] border-[#2e180d] shadow-[inset_0_0_40px_rgba(0,0,0,0.8),0_10px_30px_rgba(0,0,0,0.6)] p-1 sm:p-2.5 flex flex-col justify-between overflow-hidden">
         {/* フェルト布地のマット感グラデーション */}
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(18,84,40,0.3)_0%,rgba(0,0,0,0.5)_100%)]" />
 
         {/* (A) 対面 (CPU-2) - 奥・上側 */}
-        <div className="relative z-10 flex items-start justify-between border-b border-emerald-800/30 pb-1.5 sm:pb-2 px-1.5 sm:px-3">
+        <div className="relative z-10 flex items-center justify-between border-b border-emerald-800/30 pb-0.5 sm:pb-1.5 px-1 sm:px-2 flex-shrink-0">
           {/* 対面プレイヤー情報 */}
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-950/70 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl border border-emerald-800/40 shadow-md">
+          <div className="flex items-center gap-1 sm:gap-2 bg-slate-950/70 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg border border-emerald-800/40 shadow-md">
             <div
-              className={`p-1 rounded-md sm:rounded-lg border transition-all ${
+              className={`p-0.5 sm:p-1 rounded border transition-all ${
                 gameState.activePlayerIndex === 2
-                  ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-400 animate-pulse'
+                  ? 'bg-amber-400 text-slate-950 border-amber-300 ring-1 sm:ring-2 ring-amber-400 animate-pulse'
                   : 'bg-emerald-950 border-emerald-700/50 text-emerald-400'
               }`}
             >
-              <Cpu className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <Cpu className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </div>
             <div>
-              <div className="text-[10px] sm:text-xs font-bold text-emerald-100 flex items-center gap-1">
+              <div className="text-[9px] sm:text-xs font-bold text-emerald-100 flex items-center gap-1">
                 <span>{toimen.name} ({getWindJa(toimen.seatWind)})</span>
                 {toimen.isRiichi && (
-                  <span className="bg-rose-600 text-white text-[7px] sm:text-[8px] px-1 py-0.2 rounded font-black shadow animate-pulse">
+                  <span className="bg-rose-600 text-white text-[7px] px-1 py-0.2 rounded font-black shadow animate-pulse">
                     立直
                   </span>
                 )}
               </div>
-              <div className="text-[10px] sm:text-[11px] text-amber-300 font-mono font-bold">
+              <div className="text-[9px] sm:text-[11px] text-amber-300 font-mono font-bold">
                 {toimen.score.toLocaleString()}点
               </div>
             </div>
           </div>
 
           {/* 対面の手牌 & 副露牌 */}
-          <div className="flex flex-col gap-1 items-end">
-            <div className="flex items-center gap-1.5 sm:gap-3">
+          <div className="flex flex-col gap-0.5 items-end">
+            <div className="flex items-center gap-1 sm:gap-2">
               {toimen.melds.length > 0 && <MeldsView melds={toimen.melds} size="xs" />}
               {renderOpponentStandingHand(toimen.hand.length, !!toimen.drawnTile)}
             </div>
@@ -211,22 +211,22 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
         </div>
 
         {/* (B) 卓中央エリア: 上家(左) - 河・中央センターボックス・河 - 下家(右) */}
-        <div className="relative z-10 grid grid-cols-12 gap-1 sm:gap-2 my-auto items-center">
+        <div className="relative z-10 grid grid-cols-12 gap-0.5 sm:gap-1.5 my-auto items-center flex-1 min-h-0">
           {/* 上家エリア (CPU-3 / 左) */}
-          <div className="col-span-3 flex items-center gap-1 sm:gap-2">
+          <div className="col-span-3 flex items-center gap-1">
             {/* 上家手牌（縦並び） */}
             <div className="hidden md:block">
               {renderOpponentStandingHand(kamicha.hand.length, !!kamicha.drawnTile, true)}
             </div>
 
             {/* 上家情報 & 河 */}
-            <div className="flex flex-col gap-1 flex-1">
-              <div className="flex items-center justify-between bg-slate-950/70 p-1 sm:p-1.5 rounded-md sm:rounded-lg border border-emerald-800/40">
-                <span className="text-[9px] sm:text-[10px] font-bold text-emerald-100 flex items-center gap-0.5 truncate">
-                  <Cpu className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-400 flex-shrink-0" />
+            <div className="flex flex-col gap-0.5 flex-1">
+              <div className="flex items-center justify-between bg-slate-950/70 p-0.5 sm:p-1 rounded border border-emerald-800/40">
+                <span className="text-[8px] sm:text-[10px] font-bold text-emerald-100 flex items-center gap-0.5 truncate">
+                  <Cpu className="w-2.5 h-2.5 text-emerald-400 flex-shrink-0" />
                   <span className="truncate">{kamicha.name}</span>
                 </span>
-                <span className="text-[8px] sm:text-[10px] font-mono text-amber-300 font-bold ml-1">
+                <span className="text-[8px] sm:text-[10px] font-mono text-amber-300 font-bold ml-0.5">
                   {kamicha.score.toLocaleString()}
                 </span>
               </div>
@@ -242,9 +242,9 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
           </div>
 
           {/* 卓中央（対面の河 + センターボックス + 自家の河） */}
-          <div className="col-span-6 flex flex-col items-center justify-center gap-1 sm:gap-2">
+          <div className="col-span-6 flex flex-col items-center justify-center gap-0.5 sm:gap-1">
             {/* 対面の河 (画面奥・上) */}
-            <div className="w-full max-w-[220px] min-[390px]:max-w-[240px] sm:max-w-[280px]">
+            <div className="w-full max-w-[190px] min-[390px]:max-w-[210px] sm:max-w-[260px]">
               <PlayerRiver
                 discards={toimen.discards}
                 playerName={toimen.name}
@@ -258,7 +258,7 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
             <CenterSquare gameState={gameState} />
 
             {/* 自家の河 (画面手前・下) */}
-            <div className="w-full max-w-[220px] min-[390px]:max-w-[240px] sm:max-w-[280px]">
+            <div className="w-full max-w-[190px] min-[390px]:max-w-[210px] sm:max-w-[260px]">
               <PlayerRiver
                 discards={me.discards}
                 playerName="自家 (あなた)"
@@ -270,15 +270,15 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
           </div>
 
           {/* 下家エリア (CPU-1 / 右) */}
-          <div className="col-span-3 flex items-center gap-1 sm:gap-2 justify-end">
+          <div className="col-span-3 flex items-center gap-1 justify-end">
             {/* 下家情報 & 河 */}
-            <div className="flex flex-col gap-1 flex-1">
-              <div className="flex items-center justify-between bg-slate-950/70 p-1 sm:p-1.5 rounded-md sm:rounded-lg border border-emerald-800/40">
-                <span className="text-[9px] sm:text-[10px] font-bold text-emerald-100 flex items-center gap-0.5 truncate">
-                  <Cpu className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-400 flex-shrink-0" />
+            <div className="flex flex-col gap-0.5 flex-1">
+              <div className="flex items-center justify-between bg-slate-950/70 p-0.5 sm:p-1 rounded border border-emerald-800/40">
+                <span className="text-[8px] sm:text-[10px] font-bold text-emerald-100 flex items-center gap-0.5 truncate">
+                  <Cpu className="w-2.5 h-2.5 text-emerald-400 flex-shrink-0" />
                   <span className="truncate">{shimocha.name}</span>
                 </span>
-                <span className="text-[8px] sm:text-[10px] font-mono text-amber-300 font-bold ml-1">
+                <span className="text-[8px] sm:text-[10px] font-mono text-amber-300 font-bold ml-0.5">
                   {shimocha.score.toLocaleString()}
                 </span>
               </div>
@@ -300,22 +300,22 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
         </div>
 
         {/* (C) 自家 (プレイヤー) - 手前・下側 */}
-        <div className="relative z-10 w-full mt-1 sm:mt-2">
+        <div className="relative z-20 w-full mt-auto flex-shrink-0">
           {/* 自家ステータスバー & 副露 */}
-          <div className="flex items-center justify-between mb-1 px-1 sm:px-2">
-            <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-950/80 px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl border border-blue-600/40 shadow">
-              <div className="p-0.5 sm:p-1 bg-blue-600 text-white rounded-md">
-                <User className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          <div className="flex items-center justify-between mb-0.5 px-0.5 sm:px-1">
+            <div className="flex items-center gap-1 sm:gap-1.5 bg-slate-950/80 px-1.5 sm:px-2.5 py-0.5 rounded-md sm:rounded-lg border border-blue-600/40 shadow">
+              <div className="p-0.5 bg-blue-600 text-white rounded">
+                <User className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
               </div>
-              <span className="text-[11px] sm:text-xs font-bold text-slate-100">
+              <span className="text-[10px] sm:text-xs font-bold text-slate-100">
                 自家 ({getWindJa(me.seatWind)})
               </span>
               {me.isRiichi && (
-                <span className="bg-rose-600 text-white text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.2 rounded font-black shadow animate-pulse">
+                <span className="bg-rose-600 text-white text-[7px] sm:text-[8px] px-1 py-0.2 rounded font-black shadow animate-pulse">
                   立直中
                 </span>
               )}
-              <span className="text-[11px] sm:text-xs font-mono text-amber-400 font-black">
+              <span className="text-[10px] sm:text-xs font-mono text-amber-400 font-black">
                 {me.score.toLocaleString()}点
               </span>
             </div>

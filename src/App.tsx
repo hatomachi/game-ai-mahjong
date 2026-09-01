@@ -321,30 +321,30 @@ export default function App() {
       </div>
 
       {/* 3. モバイル専用ボトムナビゲーションバー */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 flex items-center justify-around py-2 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] pb-safe">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 flex items-center justify-around py-1 px-3 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] pb-safe h-12">
         <button
           type="button"
           onClick={() => setMobileTab('table')}
-          className={`flex flex-col items-center gap-1 py-1 px-5 rounded-xl transition font-bold text-xs ${
+          className={`flex flex-col items-center gap-0.5 py-0.5 px-4 rounded-lg transition font-bold text-[10px] ${
             mobileTab === 'table'
-              ? 'text-emerald-400 bg-emerald-950/50 border border-emerald-800/60 shadow-sm'
+              ? 'text-emerald-400 bg-emerald-950/60 border border-emerald-800/60'
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          <Gamepad2 className="w-5 h-5" />
+          <Gamepad2 className="w-4 h-4" />
           <span>麻雀卓 (盤面)</span>
         </button>
 
         <button
           type="button"
           onClick={() => setMobileTab('coach')}
-          className={`flex flex-col items-center gap-1 py-1 px-5 rounded-xl transition font-bold text-xs relative ${
+          className={`flex flex-col items-center gap-0.5 py-0.5 px-4 rounded-lg transition font-bold text-[10px] relative ${
             mobileTab === 'coach'
-              ? 'text-amber-400 bg-amber-950/50 border border-amber-800/60 shadow-sm'
+              ? 'text-amber-400 bg-amber-950/60 border border-amber-800/60'
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          <Bot className="w-5 h-5" />
+          <Bot className="w-4 h-4" />
           <span>AI牌読みコーチ</span>
         </button>
       </div>

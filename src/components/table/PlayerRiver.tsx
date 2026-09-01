@@ -57,9 +57,9 @@ export const PlayerRiver: React.FC<PlayerRiverProps> = ({
       </div>
 
       {/* 河の牌グリッド */}
-      <div className="flex flex-col gap-0.5 min-h-[76px] sm:min-h-[90px] bg-slate-950/60 p-1 sm:p-1.5 rounded-md sm:rounded-lg border border-emerald-900/60 shadow-inner justify-center">
+      <div className="flex flex-col gap-0.5 min-h-[26px] sm:min-h-[60px] bg-slate-950/60 p-0.5 sm:p-1 rounded-md sm:rounded-lg border border-emerald-900/60 shadow-inner justify-center">
         {discards.length === 0 ? (
-          <div className="text-[9px] sm:text-[10px] text-slate-500 italic py-4 text-center">
+          <div className="text-[8px] sm:text-[9px] text-slate-500 italic py-1 text-center">
             捨て牌なし
           </div>
         ) : (

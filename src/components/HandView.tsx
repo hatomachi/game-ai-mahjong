@@ -70,11 +70,11 @@ export const HandView: React.FC<HandViewProps> = ({
   };
 
   return (
-    <div className="bg-gradient-to-b from-slate-900/95 via-slate-950/95 to-[#1a0f07]/95 rounded-xl sm:rounded-2xl border-2 border-amber-950/80 p-2 sm:p-3.5 shadow-2xl flex flex-col gap-1.5 sm:gap-2.5 select-none">
+    <div className="bg-gradient-to-b from-slate-900/95 via-slate-950/95 to-[#1a0f07]/95 rounded-xl sm:rounded-2xl border-2 border-amber-950/80 p-1.5 sm:p-3 shadow-2xl flex flex-col gap-1 sm:gap-2 select-none">
       {/* 上部ステータスバー: シャンテン数・有効牌・操作アクション */}
-      <div className="flex items-center justify-between flex-wrap gap-1.5 text-xs border-b border-slate-800/80 pb-1.5 sm:pb-2">
-        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
-          <div className="flex items-center gap-1 bg-slate-950 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border border-slate-800 font-bold shadow-inner">
+      <div className="flex items-center justify-between flex-wrap gap-1 text-xs border-b border-slate-800/80 pb-1 sm:pb-1.5">
+        <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+          <div className="flex items-center gap-1 bg-slate-950 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg border border-slate-800 font-bold shadow-inner">
             <span
               className={`text-[11px] sm:text-xs ${
                 shantenRes.shanten <= 0
