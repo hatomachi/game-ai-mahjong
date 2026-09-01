@@ -67,28 +67,28 @@ describe('tileUtils', () => {
     });
   });
 
-  it('SVG牌画像パスの取得が正確である（FluffyStuff/riichi-mahjong-tiles 準拠）', () => {
+  it('合成済み牌画像パスの取得が正確である（白牌立体背景合成済み・軽量PNG）', () => {
     // 萬子・筒子・索子
-    expect(getTileSvgPath({ id: '1m_0', suit: 'man', value: 1 })).toBe('/tiles/Man1.svg');
-    expect(getTileSvgPath({ id: '9p_0', suit: 'pin', value: 9 })).toBe('/tiles/Pin9.svg');
-    expect(getTileSvgPath({ id: '1s_0', suit: 'sou', value: 1 })).toBe('/tiles/Sou1.svg');
+    expect(getTileSvgPath({ id: '1m_0', suit: 'man', value: 1 })).toBe('/tiles/Man1.png');
+    expect(getTileSvgPath({ id: '9p_0', suit: 'pin', value: 9 })).toBe('/tiles/Pin9.png');
+    expect(getTileSvgPath({ id: '1s_0', suit: 'sou', value: 1 })).toBe('/tiles/Sou1.png');
 
     // 赤ドラ
-    expect(getTileSvgPath({ id: '5m_red', suit: 'man', value: 5, isRedDora: true })).toBe('/tiles/Man5-Dora.svg');
-    expect(getTileSvgPath({ id: '5p_red', suit: 'pin', value: 5, isRedDora: true })).toBe('/tiles/Pin5-Dora.svg');
-    expect(getTileSvgPath({ id: '5s_red', suit: 'sou', value: 5, isRedDora: true })).toBe('/tiles/Sou5-Dora.svg');
+    expect(getTileSvgPath({ id: '5m_red', suit: 'man', value: 5, isRedDora: true })).toBe('/tiles/Man5-Dora.png');
+    expect(getTileSvgPath({ id: '5p_red', suit: 'pin', value: 5, isRedDora: true })).toBe('/tiles/Pin5-Dora.png');
+    expect(getTileSvgPath({ id: '5s_red', suit: 'sou', value: 5, isRedDora: true })).toBe('/tiles/Sou5-Dora.png');
 
     // 字牌
-    expect(getTileSvgPath({ id: '1z_0', suit: 'honor', value: 1 })).toBe('/tiles/Ton.svg');
-    expect(getTileSvgPath({ id: '2z_0', suit: 'honor', value: 2 })).toBe('/tiles/Nan.svg');
-    expect(getTileSvgPath({ id: '3z_0', suit: 'honor', value: 3 })).toBe('/tiles/Shaa.svg');
-    expect(getTileSvgPath({ id: '4z_0', suit: 'honor', value: 4 })).toBe('/tiles/Pei.svg');
-    expect(getTileSvgPath({ id: '5z_0', suit: 'honor', value: 5 })).toBe('/tiles/Haku.svg');
-    expect(getTileSvgPath({ id: '6z_0', suit: 'honor', value: 6 })).toBe('/tiles/Hatsu.svg');
-    expect(getTileSvgPath({ id: '7z_0', suit: 'honor', value: 7 })).toBe('/tiles/Chun.svg');
+    expect(getTileSvgPath({ id: '1z_0', suit: 'honor', value: 1 })).toBe('/tiles/Ton.png');
+    expect(getTileSvgPath({ id: '2z_0', suit: 'honor', value: 2 })).toBe('/tiles/Nan.png');
+    expect(getTileSvgPath({ id: '3z_0', suit: 'honor', value: 3 })).toBe('/tiles/Shaa.png');
+    expect(getTileSvgPath({ id: '4z_0', suit: 'honor', value: 4 })).toBe('/tiles/Pei.png');
+    expect(getTileSvgPath({ id: '5z_0', suit: 'honor', value: 5 })).toBe('/tiles/Haku.png');
+    expect(getTileSvgPath({ id: '6z_0', suit: 'honor', value: 6 })).toBe('/tiles/Hatsu.png');
+    expect(getTileSvgPath({ id: '7z_0', suit: 'honor', value: 7 })).toBe('/tiles/Chun.png');
 
     // 裏面
-    expect(getTileSvgPath(undefined, true)).toBe('/tiles/Back.svg');
+    expect(getTileSvgPath(undefined, true)).toBe('/tiles/Back.png');
   });
 });
 

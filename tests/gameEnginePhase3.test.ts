@@ -121,9 +121,10 @@ describe('gameEngine Phase 3 Integration', () => {
     state = startRound(state);
 
     // 下家 (player 1, CPU-1) の手牌に 白(5z) を2枚持たせる (13枚ノーテン形: 124m456p789s11m55z)
+    state.players[0].hand = parseTiles('369m147p258s123z2'); // 人間も副露しない手牌
     state.players[1].hand = parseTiles('124m456p789s11m55z');
     state.players[2].hand = parseTiles('147m258p369s123z1'); // 他家は副露しない手牌
-    state.players[3].hand = parseTiles('258m369p147s456z2');
+    state.players[3].hand = parseTiles('258m369p147s456z3');
 
     // 人間 (player 0) が 白(5z) を捨てる
     state.activePlayerIndex = 0;
