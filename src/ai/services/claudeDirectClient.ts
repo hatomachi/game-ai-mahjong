@@ -19,7 +19,8 @@ export async function callClaudeDirect(
 
   const requestBody = {
     model: targetModel,
-    max_tokens: 2048,
+    max_tokens: 4096,
+    system: 'あなたは最高位戦やMリーグ等で活躍するプロ競技麻雀雀士であり、専属AI牌読みコーチです。提示された局面情報と計算済みデータを元に、単に答えを1行で出すのではなく、なぜその牌なのか、受け入れ枚数・打点・筋・現物・安全度の論理的根拠を最後まで詳しく丁寧に解説してください。',
     messages: [
       {
         role: 'user',

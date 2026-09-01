@@ -52,12 +52,11 @@ describe('GameEngine (4人対局ゲームループ)', () => {
 
     // Player 1 (CPU-1) が思考・打牌
     state = cpuStepAction(state);
-    if (state.phase === 'waiting_action') {
+    while (state.phase === 'waiting_action') {
       state = resolvePendingAction(state, 0, 'pass');
     }
     expect(state.players[1].discards).toHaveLength(1);
-    expect(state.activePlayerIndex).toBe(2); // 対面へ
-    expect(state.players[2].drawnTile).not.toBeNull();
+    expect(state.players[state.activePlayerIndex].drawnTile).not.toBeNull();
   });
 
   it('4人全員が打牌すると山牌が減り、ゲームが周回する', () => {

@@ -1,7 +1,9 @@
 import { SanitizedPlayerView } from '../types/context';
 import { getTileNameJa, getTileCode, sortTiles, getDoraTileFromMarker } from '../../core/utils/tileUtils';
-import { DiscardTile, Meld } from '../../core/types/tile';
+import { DiscardTile, Meld, Tile } from '../../core/types/tile';
 import { Wind } from '../../core/types/game';
+import { calcShanten } from '../../core/shanten/shanten';
+import { calcUkeireForDiscards, calcUkeireFor13Tiles } from '../../core/shanten/ukeire';
 
 const WIND_JA: Record<Wind, string> = {
   east: '東',
@@ -22,7 +24,7 @@ function formatDiscards(discards: DiscardTile[]): string {
       const code = getTileCode(d.tile);
       const mark = d.isRiichiDeclaration ? '【リーチ宣言牌】' : '';
       const tsumo = d.isTsumogiri ? '(ツモ切り)' : '(手出し)';
-      return `${index + 1}巡目: ${name}[${code}] ${tsumo} ${mark}`.trim();
+      return `${index + 1}巡目:${name}[${code}]${tsumo}${mark}`.trim();
     })
     .join(', ');
 }
@@ -50,6 +52,59 @@ function formatMelds(melds: Meld[]): string {
 }
 
 /**
+ * 事前のルールベース計算データを文字列化（LLMの計算ミスを防ぎ高品質な解説を引き出す）
+ */
+function buildPrecalculatedFacts(context: SanitizedPlayerView): string {
+  const fullHand: Tile[] = context.myDrawnTile ? [...context.myHand, context.myDrawnTile] : context.myHand;
+  const shantenRes = calcShanten(fullHand);
+
+  let ukeireSection = '';
+  if (fullHand.length === 14) {
+    const discardsAnalysis = calcUkeireForDiscards(fullHand);
+    const topChoices = discardsAnalysis.slice(0, 4).map((d, i) => {
+      const name = getTileNameJa(d.discardTile);
+      const code = getTileCode(d.discardTile);
+      const ukeires = d.ukeireTiles.map(u => `${u.tileCode}(${u.remainingCount}枚)`).join(' ');
+      return `  ${i + 1}. 打【${name}[${code}]】 -> 打後向聴数:${d.shantenAfterDiscard}向聴 / 最大受入:${d.totalUkeireCount}枚 (有効牌: ${ukeires})`;
+    }).join('\n');
+    ukeireSection = `\n- 【打牌候補と受け入れ枚数ランキング（計算済み）】:\n${topChoices}`;
+  } else if (fullHand.length === 13) {
+    const ukeire13 = calcUkeireFor13Tiles(fullHand);
+    const ukeires = ukeire13.ukeireTiles.map(u => `${u.tileCode}(${u.remainingCount}枚)`).join(' ');
+    ukeireSection = `\n- 【13枚テンパイ/向聴の受け入れ（計算済み）】: 向聴数:${ukeire13.currentShanten} / 受入:${ukeire13.totalUkeireCount}枚 (待ち/有効牌: ${ukeires})`;
+  }
+
+  // 守備・安全牌分析
+  const riichiOpponents = context.opponents.filter(p => p.isRiichi);
+  let defenseSection = '';
+  if (riichiOpponents.length > 0) {
+    const target = riichiOpponents[0];
+    const genbutsuSet = new Set(target.discards.map(d => `${d.tile.value}${d.tile.suit[0]}`));
+    const myGenbutsu = fullHand.filter(t => genbutsuSet.has(`${t.value}${t.suit[0]}`));
+
+    // スジ判定
+    const sujiCodes = new Set<string>();
+    target.discards.forEach(d => {
+      if (d.tile.suit !== 'honor') {
+        const v = d.tile.value;
+        const s = d.tile.suit[0];
+        if (v === 4) { sujiCodes.add(`1${s}`); sujiCodes.add(`7${s}`); }
+        if (v === 5) { sujiCodes.add(`2${s}`); sujiCodes.add(`8${s}`); }
+        if (v === 6) { sujiCodes.add(`3${s}`); sujiCodes.add(`9${s}`); }
+        if (v === 1 || v === 7) { sujiCodes.add(`4${s}`); }
+        if (v === 2 || v === 8) { sujiCodes.add(`5${s}`); }
+        if (v === 3 || v === 9) { sujiCodes.add(`6${s}`); }
+      }
+    });
+    const mySuji = fullHand.filter(t => sujiCodes.has(`${t.value}${t.suit[0]}`) && !genbutsuSet.has(`${t.value}${t.suit[0]}`));
+
+    defenseSection = `\n- 【警戒対象: ${target.name} (第${target.riichiTurn || '?'}巡目リーチ)】:\n  * 手牌にある現物 (100%安全): ${myGenbutsu.map(t => getTileNameJa(t)).join(', ') || 'なし'}\n  * 手牌にある筋牌 (スジ安全): ${mySuji.map(t => getTileNameJa(t)).join(', ') || 'なし'}`;
+  }
+
+  return `- 現在の手牌向聴数: **${shantenRes.shanten === 0 ? 'テンパイ (聴牌)' : `${shantenRes.shanten}向聴`}**${ukeireSection}${defenseSection}`;
+}
+
+/**
  * SanitizedPlayerView とユーザーの質問から、LLM向けの総合プロンプトテキストを生成
  */
 export function buildMahjongCoachPrompt(
@@ -72,20 +127,21 @@ export function buildMahjongCoachPrompt(
 
   const myDiscardsText = formatDiscards(context.myDiscards);
   const myMeldsText = formatMelds(context.myMelds);
+  const precalculatedFacts = buildPrecalculatedFacts(context);
 
   const opponentsSection = context.opponents
     .map(op => {
       const riichiInfo = op.isRiichi ? ` 🚨【立直中 / ${op.riichiTurn ?? '?'}巡目】` : '';
       return `### ${WIND_JA[op.seatWind]}家: ${op.name} (${op.score}点)${riichiInfo}
-- 手牌枚数: ${op.handTileCount}枚 (内容は伏せられています)
+- 手牌枚数: ${op.handTileCount}枚 (他家の手牌は非公開)
 - 副露: ${formatMelds(op.melds)}
 - 河(捨て牌): ${formatDiscards(op.discards)}`;
     })
     .join('\n\n');
 
-  return `あなたはプロ競技麻雀雀士であり、初心〜中級者を指導する専属AI牌読みコーチです。
-提供された「プレイヤーから見える公開情報（自手牌・全員の河・副露・ドラ・点数状況）」のみを元に、論理的かつ分かりやすくプレイヤーの質問に答えてください。
-※重要: 他家の非公開手牌や山牌の情報は伏せられており、あなたもプレイヤーと同じ不完全情報の中で牌読みと分析を行います。
+  return `あなたは最高位戦・Mリーグ等のプロ競技麻雀で活躍するプロ雀士であり、初心〜上級者を熱心に育てる専属AI牌読みコーチです。
+提供された公開局面情報（不完全情報）と、高精度エンジンによって計算された事前分析データを元に、単なる答え（結論）だけでなく、**「なぜその選択なのか」「受け入れ枚数・打点・安全度の比較根拠」「今後の対局で活かせる牌読みセオリー」**を論理的かつ情熱的に詳しく解説してください。
+※他家の手牌や山牌はあなたにも見えておらず、プレイヤーと同じ公開情報のみから推理します。
 
 ---
 ## 🀄 現在の対局状況
@@ -117,6 +173,9 @@ ${
     : ''
 }
 
+### 【📊 エンジンによる事前分析データ（計算済み事実）】
+${precalculatedFacts}
+
 ### 【他家の公開情報】
 ${opponentsSection}
 
@@ -125,14 +184,17 @@ ${opponentsSection}
 「${userQuestion}」
 
 ---
-## 💡 回答フォーマットと指導方針
-1. **結論 (要約)**:
-   - 質問に対する明確な答え（おすすめの打牌、最も安全な牌、テンパイ速度、点数・符計算の結論など）を最初に1〜2行で述べてください。
-2. **ロジカルな牌読み・分析根拠**:
-   - **現物・筋（スジ）・壁（ノーチャンス/ワンチャンス）**: 全員の河と自分の手牌から見えている枚数を数え、なぜその牌が安全/危険なのかを論理的に解説してください。
-   - **手牌の価値と受け入れ**: 自分の手のシャンテン数、受け入れ牌、ドラを使った打点向上ルートを解説してください。
-   - **押し引き判断**: 相手のリーチや仕掛けに対する自分の手の価値（打点・巡目・待ちの良さ）を比較してください。
-3. **上達のためのワンポイントアドバイス**:
-   - 今回の判断から学べる、今後の対局でも使える牌読みのコツを1文で添えてください。
+## 💡 回答フォーマットと指導ガイドライン
+以下の構成で、丁寧かつ中身の濃い解説を行ってください（回答を途中で省略せず、必ず最後まで書き切ってください）：
+
+1. **💡 結論（推奨アクション）**:
+   - おすすめの打牌、安全牌、または押し引きの結論を明快に提示。
+2. **📊 論理的な理由と牌効率・安全度の比較**:
+   - 事前分析データの受け入れ枚数やシャンテン数を引用し、なぜ他の選択肢より優れているのかを比較解説。
+   - 相手の河やリーチに対して、現物・スジ・ワンチャンス等の観点から危険度を考察。
+3. **🎯 今後の構想と打点アップへの道筋**:
+   - 狙える役（リーチ、タンヤオ、ピンフ、役牌、混一色など）や、ドラ・赤ドラを絡めた最高打点ルート。
+4. **✨ プロの一言（牌読み・上達のコツ）**:
+   - 実戦で即役立つ牌読みや押し引きの金言・セオリーを1〜2文で伝授。
 `;
 }

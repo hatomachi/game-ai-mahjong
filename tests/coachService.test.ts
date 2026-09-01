@@ -93,7 +93,7 @@ describe('AI Coach Service & Storage Tests', () => {
     it('loads default settings when empty', () => {
       const settings = loadAISettings();
       expect(settings.preferredProvider).toBe('auto');
-      expect(settings.geminiModel).toBe('gemini-2.5-flash');
+      expect(settings.geminiModel).toBe('gemini-2.0-flash');
     });
 
     it('saves and updates settings in localStorage', () => {

@@ -136,8 +136,9 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClos
                   onChange={(e) => setSettings({ ...settings, geminiModel: e.target.value })}
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
                 >
-                  <option value="gemini-2.5-flash">gemini-2.5-flash (推奨・超高速)</option>
-                  <option value="gemini-1.5-flash">gemini-1.5-flash (高速)</option>
+                  <option value="gemini-2.0-flash">gemini-2.0-flash (推奨・最新・超高速)</option>
+                  <option value="gemini-2.5-flash">gemini-2.5-flash (実験版)</option>
+                  <option value="gemini-1.5-flash">gemini-1.5-flash (安定版)</option>
                   <option value="gemini-1.5-pro">gemini-1.5-pro (高精度推論)</option>
                 </select>
               </div>

@@ -13,13 +13,21 @@ export async function callGeminiDirect(
 ): Promise<AICoachResponse> {
   const startTime = Date.now();
   const prompt = buildMahjongCoachPrompt(context, question);
-  const targetModel = model || 'gemini-2.5-flash';
+  const targetModel = model || 'gemini-2.0-flash';
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
 
   const requestBody = {
+    systemInstruction: {
+      parts: [
+        {
+          text: 'あなたは最高位戦やMリーグで活躍するプロ競技麻雀雀士であり、専属AI牌読みコーチです。提示された局面情報と計算済みデータを元に、単に答えを1行で出すのではなく、なぜその牌なのか、受け入れ枚数・打点・筋・現物・安全度の論理的根拠を最後まで詳しく丁寧に解説してください。',
+        },
+      ],
+    },
     contents: [
       {
+        role: 'user',
         parts: [
           {
             text: prompt,
@@ -28,8 +36,8 @@ export async function callGeminiDirect(
       },
     ],
     generationConfig: {
-      temperature: 0.3,
-      maxOutputTokens: 2048,
+      temperature: 0.4,
+      maxOutputTokens: 4096,
     },
   };
 
