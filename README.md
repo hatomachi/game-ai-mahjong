@@ -1,37 +1,56 @@
 # AI Mahjong Coach (麻雀ゲーム & AI牌読みコーチ) 🀄🤖
 
-MacBookローカル環境で動作するブラウザ4人麻雀ゲーム（1プレイヤー vs 3CPU）と、ローカルCLI（Antigravity CLI / Claude Code等）を直接連携させた**「不完全情報AI牌読みコーチングシステム」**です。
+ブラウザ4人麻雀ゲーム（1プレイヤー vs 3CPU）と、Direct API（Google Gemini / Claude）およびローカルCLI（Antigravity CLI / Claude Code）を連携させた**「不完全情報AI牌読みコーチングシステム」**です。
+
+Cloudflare Pages 等の静的ホスティングで簡単に公開でき、各自のAPIキー（BYOK）または完全オフラインのルールベース牌読みエンジンで誰でも遊べます。
 
 ---
 
 ## 🌟 特徴
+
 1. **完全な不完全情報AIコーチ**:
-   - AIはCPUの手牌や山牌にアクセスできません。プレイヤーに見えている公開情報（自手牌、全員の捨て牌/河、副露、ドラ、点数）のみから、筋・壁・現物・序盤打牌などをロジカルに分析します。
-2. **ローカルCLI直接連携**:
-   - MacBook上で動く `agy`（Antigravity CLI）や `claude -p`（Claude Code）をゲームエンジンから自動実行し、チャットで何でも質問できます。
-3. **牌読み学習・上達のサポート**:
-   - 「何を切るべきか」「誰がテンパイしているか」「危険牌・安牌の理由」「符計算・点数計算の根拠」などを論理的に解説。
+   - AIは他家の手牌や山牌にアクセスできません。プレイヤーに見えている公開情報（自手牌、全員の捨て牌/河、副露、ドラ、点数、自風・場風）のみから、筋・壁・現物・向聴数などをロジカルに推論・解説します。
+2. **マルチAIバックエンド対応（ハイブリッド）**:
+   - **Google Gemini Direct API** (推奨): ブラウザから直接高速推論（1日1500回まで無料枠利用可能）
+   - **Anthropic Claude Direct API**: ブラウザから直接高精度推論
+   - **ローカルCLI (agy / claude)**: 開発時やCLIで深く推論させたい場合にローカル連携
+   - **ルールベース牌読みエンジン**: APIキー未設定・オフラインでも完全0円・即座に応答
+3. **Cloudflare Pages / 静的ホスティング完全対応**:
+   - バックエンドサーバーなしの完全なSPAとしてビルド・デプロイ可能。
 
 ---
 
-## 🚀 クイックスタート
+## 🚀 起動方法
 
-### 1. 依存関係のインストール
+### ローカル開発
 ```bash
+# 依存関係のインストール
 npm install
-```
 
-### 2. アプリケーションの起動
-```bash
+# フロントエンド & ローカルCLIサーバーの同時起動
 npm run dev
-```
-- フロントエンド: `http://localhost:5173`
-- ローカルCLIブリッジサーバー: `http://localhost:3001`
 
-### 3. テストの実行
-```bash
+# 個別起動
+npm run dev:web      # フロントエンド (http://localhost:5173)
+npm run dev:server   # ローカルCLIサーバー (http://localhost:3001)
+
+# テスト実行
 npm test
 ```
+
+---
+
+## ☁️ Cloudflare Pages へのデプロイ手順
+
+1. 本リポジトリを GitHub に push します。
+2. Cloudflare ダッシュボードで **Workers & Pages > Create application > Pages > Connect to Git** を選択。
+3. ビルド設定を入力:
+   - **Framework preset**: `Vite`
+   - **Build command**: `npm run build`
+   - **Build output directory**: `dist`
+4. （任意）友達全員に無料Gemini枠を提供する場合：
+   - Pages プロジェクト設定の **Settings > Environment variables** に `GEMINI_API_KEY` を登録すると、Cloudflare Functions 経由で友達もキー入力不要でAIコーチが使えます。
+5. **Save and Deploy** をクリックして完了！
 
 ---
 

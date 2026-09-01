@@ -32,12 +32,13 @@ export const HandView: React.FC<HandViewProps> = ({
   // 13枚時の受け入れ（ツモ前または打牌後）
   const ukeire13 = hand.length === 13 ? calcUkeireFor13Tiles(hand) : null;
 
-  // 14枚時の何切る分析
-  const discardsAnalysis = fullTiles.length === 14 ? calcUkeireForDiscards(fullTiles) : [];
+  // 打牌番（14枚、または副露時の11枚、8枚、5枚など）での何切る分析
+  const canDiscardNow = fullTiles.length % 3 === 2;
+  const discardsAnalysis = canDiscardNow ? calcUkeireForDiscards(fullTiles) : [];
   const bestDiscard = discardsAnalysis.length > 0 ? discardsAnalysis[0] : null;
 
   // 和了可能かどうか
-  const winCheck = fullTiles.length === 14 ? checkWinningHand(fullTiles) : { isWin: false };
+  const winCheck = canDiscardNow ? checkWinningHand(fullTiles) : { isWin: false };
 
   // リーチ可能判定: 門前かつシャンテン数0（テンパイ）かつ未リーチかつ持ち点1000以上
   const isMenzen = melds.every((m) => m.type === 'ankan');

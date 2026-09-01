@@ -1,7 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SanitizedPlayerView } from '../ai/types/context';
 import { buildMahjongCoachPrompt } from '../ai/prompt/contextFormatter';
-import { Bot, Send, Sparkles, ShieldAlert, Calculator, Flame, RefreshCw, Code, CheckCircle, Terminal, AlertTriangle } from 'lucide-react';
+import { askAICoach, checkLocalServerStatus } from '../ai/services/coachService';
+import { loadAISettings, saveAISettings } from '../ai/services/storage';
+import { AISettings, AIProvider } from '../ai/services/types';
+import { AISettingsModal } from './AISettingsModal';
+import {
+  Bot,
+  Send,
+  Sparkles,
+  ShieldAlert,
+  Calculator,
+  Flame,
+  RefreshCw,
+  Code,
+  CheckCircle,
+  Settings,
+  Hand,
+} from 'lucide-react';
 
 interface ChatMessage {
   id: string;
@@ -20,51 +36,34 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
     {
       id: 'welcome',
       sender: 'system',
-      text: '🀄 **専属AI牌読みコーチ (Antigravity CLI / agy 連動)** が待機しています。\n対局中の局面について、「おすすめの打牌」「危険牌分析」「点数・符計算」「押し引き」など何でも質問してください。',
+      text: '🀄 **専属AI牌読みコーチ** が待機しています。\n対局中の局面について、「おすすめの打牌」「危険牌分析」「点数・符計算」「押し引き」など何でも質問してください。\n\n※ 右上の ⚙️ アイコンから Google Gemini や Claude の無料APIキーを設定すると、さらに高度なLLMコーチングを受けられます。',
       timestamp: new Date().toLocaleTimeString(),
     },
   ]);
   const [inputQuestion, setInputQuestion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [cliBackend, setCliBackend] = useState<'auto' | 'agy' | 'claude' | 'mock'>('auto');
+  const [settings, setSettings] = useState<AISettings>(loadAISettings());
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showPromptModal, setShowPromptModal] = useState(false);
   const [serverConnected, setServerConnected] = useState<boolean>(false);
   const [availableBackends, setAvailableBackends] = useState<{ agy: boolean; claude: boolean; mock: boolean }>({
     agy: false,
     claude: false,
     mock: true,
   });
-  const [showPromptModal, setShowPromptModal] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // バックエンド状態の取得 & サーバー疎通確認
-  const checkServerStatus = async () => {
-    const urls = [
-      'http://localhost:3001/api/coach/status',
-      'http://127.0.0.1:3001/api/coach/status',
-      '/api/coach/status',
-    ];
-    for (const url of urls) {
-      try {
-        const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.availableBackends) {
-            setAvailableBackends(data.availableBackends);
-            setServerConnected(true);
-            return;
-          }
-        }
-      } catch {
-        // 次のURLを試す
-      }
-    }
-    setServerConnected(false);
+  const checkStatus = async () => {
+    const status = await checkLocalServerStatus();
+    setServerConnected(status.connected);
+    setAvailableBackends(status.availableBackends);
   };
 
   useEffect(() => {
-    checkServerStatus();
-    const timer = setInterval(checkServerStatus, 10000);
+    checkStatus();
+    const timer = setInterval(checkStatus, 15000);
     return () => clearInterval(timer);
   }, []);
 
@@ -87,72 +86,104 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
     if (!questionText) setInputQuestion('');
     setIsLoading(true);
 
-    const endpoints = [
-      'http://localhost:3001/api/coach/chat',
-      'http://127.0.0.1:3001/api/coach/chat',
-      '/api/coach/chat',
-    ];
+    try {
+      const result = await askAICoach(context, query, settings);
 
-    const requestPayload = {
-      question: query,
-      context,
-      cliBackend,
-    };
-
-    let success = false;
-    let errorDetail = '';
-
-    for (const endpoint of endpoints) {
-      try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestPayload),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const aiMsg: ChatMessage = {
-            id: `ai_${Date.now()}`,
-            sender: 'ai',
-            text: data.reply || (data.error ? `エラー: ${data.error}` : '回答を取得できませんでした。'),
-            backendUsed: data.backendUsed,
-            timestamp: new Date().toLocaleTimeString(),
-          };
-          setMessages(prev => [...prev, aiMsg]);
-          setServerConnected(true);
-          success = true;
-          break;
-        } else {
-          errorDetail = `HTTP ${response.status}: ${response.statusText}`;
-        }
-      } catch (err: any) {
-        errorDetail = err.message || '接続エラー';
-      }
-    }
-
-    if (!success) {
-      setServerConnected(false);
+      const aiMsg: ChatMessage = {
+        id: `ai_${Date.now()}`,
+        sender: 'ai',
+        text: result.reply || (result.error ? `エラー: ${result.error}` : '回答を取得できませんでした。'),
+        backendUsed: result.modelUsed ? `${result.providerUsed} (${result.modelUsed})` : result.providerUsed,
+        timestamp: new Date().toLocaleTimeString(),
+      };
+      setMessages(prev => [...prev, aiMsg]);
+    } catch (err: any) {
       const errorMsg: ChatMessage = {
         id: `err_${Date.now()}`,
         sender: 'system',
-        text: `⚠️ **ローカルCLIブリッジサーバー（ポート3001）に接続できませんでした** (${errorDetail})。\n\n**【解決方法】**\n別ターミナルで \`npm run dev\` (または \`npm run dev:server\`) を実行してCLIブリッジサーバーを起動してください。起動後、再度質問を送信するとローカルの \`agy\` CLIが思考結果を返します。`,
+        text: `⚠️ **AI回答の生成中にエラーが発生しました**: ${err.message || '不明なエラー'}`,
         timestamp: new Date().toLocaleTimeString(),
       };
       setMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
-  const quickQuestions = [
-    { label: '何を切るべき？', icon: <Sparkles className="w-3.5 h-3.5" />, query: 'この局面で最も受け入れと打点のバランスが良いおすすめの打牌は何ですか？理由も教えてください。' },
-    { label: '危険牌・安全牌は？', icon: <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />, query: '他家の河やリーチから見て、現物・スジ・カベ（ノーチャンス）による安全牌と危険牌を論理的に分析してください。' },
-    { label: '手牌の打点・符計算', icon: <Calculator className="w-3.5 h-3.5 text-amber-400" />, query: 'この手牌がテンパイ・アガリに向かった場合の想定役、符数計算の根拠、および点数を解説してください。' },
-    { label: '押し引き判断', icon: <Flame className="w-3.5 h-3.5 text-orange-400" />, query: '現在の巡目・点数状況・相手の気配を踏まえ、攻めるべき（押す）か降りるべき（引く）かの判断基準を教えてください。' },
-  ];
+  const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newProvider = e.target.value as AIProvider;
+    const updated = saveAISettings({ preferredProvider: newProvider });
+    setSettings(updated);
+  };
+
+  const isActionPending = !!context.pendingActionForMe;
+
+  const quickQuestions = isActionPending
+    ? [
+        {
+          label: '鳴くべき？(鳴き判断)',
+          icon: <Hand className="w-3.5 h-3.5 text-amber-400" />,
+          query: `現在、${context.pendingActionForMe?.fromPlayerName}から打牌があり、鳴くかスルー（パス）かの選択肢があります。手牌の打点・速度・役の有無・門前維持の観点から鳴くべきか論理的にアドバイスしてください。`,
+        },
+        {
+          label: 'この牌でロンできる？',
+          icon: <Sparkles className="w-3.5 h-3.5 text-rose-400" />,
+          query: '現在の捨て牌に対してロン和了が可能か、役と点数（符計算）の根拠を教えてください。',
+        },
+        {
+          label: '手牌の打点・役の確認',
+          icon: <Calculator className="w-3.5 h-3.5 text-amber-400" />,
+          query: 'この手牌で鳴いた場合と門前を維持した場合の役・打点の変化を比較してください。',
+        },
+        {
+          label: '押し引き・危険度判断',
+          icon: <Flame className="w-3.5 h-3.5 text-orange-400" />,
+          query: '他家の気配やリーチに対して、ここで鳴いて前に出るべきか、パスして安全牌を抱えるべきかを教えてください。',
+        },
+      ]
+    : [
+        {
+          label: '何を切るべき？',
+          icon: <Sparkles className="w-3.5 h-3.5" />,
+          query: 'この局面で最も受け入れと打点のバランスが良いおすすめの打牌は何ですか？理由も教えてください。',
+        },
+        {
+          label: '危険牌・安全牌は？',
+          icon: <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />,
+          query: '他家の河やリーチから見て、現物・スジ・カベ（ノーチャンス）による安全牌と危険牌を論理的に分析してください。',
+        },
+        {
+          label: '手牌の打点・符計算',
+          icon: <Calculator className="w-3.5 h-3.5 text-amber-400" />,
+          query: 'この手牌がテンパイ・アガリに向かった場合の想定役、符数計算の根拠、および点数を解説してください。',
+        },
+        {
+          label: '押し引き判断',
+          icon: <Flame className="w-3.5 h-3.5 text-orange-400" />,
+          query: '現在の巡目・点数状況・相手の気配を踏まえ、攻めるべき（押す）か降りるべき（引く）かの判断基準を教えてください。',
+        },
+      ];
 
   const currentPrompt = buildMahjongCoachPrompt(context, inputQuestion || '（質問入力中）');
+
+  // 表示用ステータスバッジ
+  const getStatusBadge = () => {
+    if (settings.geminiApiKey?.trim() && (settings.preferredProvider === 'auto' || settings.preferredProvider === 'gemini_direct')) {
+      return { text: `Gemini Direct (${settings.geminiModel})`, color: 'bg-blue-400' };
+    }
+    if (settings.claudeApiKey?.trim() && (settings.preferredProvider === 'auto' || settings.preferredProvider === 'claude_direct')) {
+      return { text: `Claude Direct (${settings.claudeModel.split('-')[0]})`, color: 'bg-amber-400' };
+    }
+    if (serverConnected && availableBackends.agy && (settings.preferredProvider === 'auto' || settings.preferredProvider === 'agy')) {
+      return { text: 'agy CLI 接続中', color: 'bg-emerald-400 animate-pulse' };
+    }
+    if (serverConnected && (settings.preferredProvider === 'auto' || settings.preferredProvider === 'claude_cli')) {
+      return { text: 'ローカルCLI 稼働中', color: 'bg-blue-400' };
+    }
+    return { text: 'ルールベース牌読み (オフライン/即時)', color: 'bg-slate-400' };
+  };
+
+  const statusBadge = getStatusBadge();
 
   return (
     <div className="flex flex-col h-full bg-slate-900/90 border-l border-slate-700/80 text-slate-200">
@@ -166,32 +197,20 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
             <h2 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
               AI牌読みコーチ
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">
-                不完全情報モード
+                不完全情報保証
               </span>
             </h2>
             <div className="flex items-center gap-1.5 text-[10px]">
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  serverConnected
-                    ? availableBackends.agy
-                      ? 'bg-emerald-400 animate-pulse'
-                      : 'bg-blue-400'
-                    : 'bg-rose-500'
-                }`}
-              />
-              <span className="text-slate-400">
-                {serverConnected
-                  ? availableBackends.agy
-                    ? 'agy CLI 接続中'
-                    : 'CLIサーバー稼働中'
-                  : 'CLIサーバー未接続 (npm run dev)'}
+              <span className={`w-2 h-2 rounded-full ${statusBadge.color}`} />
+              <span className="text-slate-400 truncate max-w-[150px]">
+                {statusBadge.text}
               </span>
             </div>
           </div>
         </div>
 
-        {/* CLIバックエンドセレクター & プロンプト確認 */}
-        <div className="flex items-center gap-1.5 text-xs">
+        {/* 右上操作アイコン群 */}
+        <div className="flex items-center gap-1 text-xs">
           <button
             type="button"
             onClick={() => setShowPromptModal(true)}
@@ -201,38 +220,34 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
             <Code className="w-4 h-4" />
           </button>
 
+          <button
+            type="button"
+            onClick={() => setShowSettingsModal(true)}
+            className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded transition relative"
+            title="AI設定（APIキー入力・プロバイダー切替）"
+          >
+            <Settings className="w-4 h-4" />
+            {(!settings.geminiApiKey && !settings.claudeApiKey && !serverConnected) && (
+              <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-amber-400 rounded-full" />
+            )}
+          </button>
+
+          {/* クイックプロバイダー選択 */}
           <div className="flex items-center bg-slate-800 rounded-lg p-0.5 border border-slate-700 text-[11px]">
-            <Terminal className="w-3 h-3 ml-1.5 text-slate-400" />
             <select
-              value={cliBackend}
-              onChange={(e) => setCliBackend(e.target.value as any)}
+              value={settings.preferredProvider}
+              onChange={handleProviderChange}
               className="bg-transparent text-slate-300 text-xs px-1.5 py-0.5 outline-none cursor-pointer"
             >
-              <option value="auto" className="bg-slate-900">自動 (agy優先)</option>
-              <option value="agy" className="bg-slate-900">agy CLI {availableBackends.agy ? '✓' : ''}</option>
-              <option value="claude" className="bg-slate-900">claude CLI {availableBackends.claude ? '✓' : ''}</option>
-              <option value="mock" className="bg-slate-900">モック (オフライン)</option>
+              <option value="auto" className="bg-slate-900">✨ 自動選択</option>
+              <option value="gemini_direct" className="bg-slate-900">🌟 Gemini Direct {settings.geminiApiKey ? '✓' : ''}</option>
+              <option value="claude_direct" className="bg-slate-900">🧠 Claude Direct {settings.claudeApiKey ? '✓' : ''}</option>
+              <option value="agy" className="bg-slate-900">💻 agy CLI {availableBackends.agy ? '✓' : ''}</option>
+              <option value="rule_based" className="bg-slate-900">⚡ ルールベース (即答)</option>
             </select>
           </div>
         </div>
       </div>
-
-      {/* サーバー未接続警告バナー */}
-      {!serverConnected && (
-        <div className="bg-amber-950/60 border-b border-amber-600/40 p-2 px-3 text-[11px] text-amber-200 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-            <span>CLIサーバーが未起動です。\n\`npm run dev\` で起動してください。</span>
-          </div>
-          <button
-            type="button"
-            onClick={checkServerStatus}
-            className="px-2 py-0.5 bg-amber-800/80 hover:bg-amber-700 rounded text-[10px] text-amber-100 font-bold transition flex-shrink-0"
-          >
-            再接続
-          </button>
-        </div>
-      )}
 
       {/* チャットメッセージログ */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3 text-xs leading-relaxed">
@@ -275,8 +290,8 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
           <div className="flex items-center gap-2 text-xs text-slate-300 p-2.5 bg-slate-800/60 rounded-xl border border-emerald-500/40 animate-pulse">
             <RefreshCw className="w-4 h-4 animate-spin text-emerald-400 flex-shrink-0" />
             <div>
-              <div className="font-bold text-emerald-300">Antigravity CLI (agy) が思考中...</div>
-              <div className="text-[10px] text-slate-400">公開盤面（自手牌・全員の河・副露・ドラ）から最適打牌・安全度を推論しています</div>
+              <div className="font-bold text-emerald-300">AI牌読みコーチが思考中...</div>
+              <div className="text-[10px] text-slate-400">公開盤面（自手牌・全員の河・副露・ドラ）から最適打牌・安全度を論理推論しています</div>
             </div>
           </div>
         )}
@@ -355,6 +370,13 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
           </div>
         </div>
       )}
+
+      {/* AI設定モーダル */}
+      <AISettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        onSaved={(newSettings) => setSettings(newSettings)}
+      />
     </div>
   );
 };

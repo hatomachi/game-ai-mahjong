@@ -245,6 +245,8 @@ export function collectPendingActions(
     if (melds.canChi || melds.canPon || melds.canDaiminkan || canRon) {
       actions.push({
         playerIndex: i,
+        fromPlayerIndex: discardPlayerIndex,
+        targetTile: discardedTile,
         availableMelds: { ...melds, canRon },
         canRon,
         ronScoreResult,
@@ -706,35 +708,43 @@ export function cpuStepAction(state: GameState): GameState {
   }
 
   const activePlayer = state.players[state.activePlayerIndex];
-  if (activePlayer.isHuman || !activePlayer.drawnTile) {
+  if (activePlayer.isHuman) {
     return state;
   }
 
-  // ツモ和了判定
-  const fullHand = [...activePlayer.hand, activePlayer.drawnTile];
-  const winContext: WinContext = {
-    isTsumo: true,
-    isRiichi: activePlayer.isRiichi,
-    isDoubleRiichi: activePlayer.isRiichi && activePlayer.riichiTurn === 1,
-    isIppatsu: activePlayer.isIppatsu,
-    roundWind: state.roundWind,
-    playerWind: activePlayer.seatWind,
-    doraMarkers: state.doraMarkers,
-    uraDoraMarkers: state.uraDoraMarkers,
-    winningTile: activePlayer.drawnTile,
-  };
+  // 打牌可能な状態かチェック: drawnTileがある、または手牌が 3n+2 枚（ポン/チー直後）
+  const canDiscard = activePlayer.drawnTile !== null || (activePlayer.hand.length % 3 === 2);
+  if (!canDiscard) {
+    return state;
+  }
 
-  const scoreResult = calculateWinningScore(
-    fullHand,
-    activePlayer.melds,
-    winContext,
-    state.honba,
-    state.riichiSticks,
-    state.activePlayerIndex
-  );
+  // ツモ和了判定 (ツモ牌がある場合のみ)
+  if (activePlayer.drawnTile) {
+    const fullHand = [...activePlayer.hand, activePlayer.drawnTile];
+    const winContext: WinContext = {
+      isTsumo: true,
+      isRiichi: activePlayer.isRiichi,
+      isDoubleRiichi: activePlayer.isRiichi && activePlayer.riichiTurn === 1,
+      isIppatsu: activePlayer.isIppatsu,
+      roundWind: state.roundWind,
+      playerWind: activePlayer.seatWind,
+      doraMarkers: state.doraMarkers,
+      uraDoraMarkers: state.uraDoraMarkers,
+      winningTile: activePlayer.drawnTile,
+    };
 
-  if (scoreResult && scoreResult.han > 0) {
-    return declareTsumoWin(state, state.activePlayerIndex);
+    const scoreResult = calculateWinningScore(
+      fullHand,
+      activePlayer.melds,
+      winContext,
+      state.honba,
+      state.riichiSticks,
+      state.activePlayerIndex
+    );
+
+    if (scoreResult && scoreResult.han > 0) {
+      return declareTsumoWin(state, state.activePlayerIndex);
+    }
   }
 
   const decision = decideCpuDiscard(activePlayer);

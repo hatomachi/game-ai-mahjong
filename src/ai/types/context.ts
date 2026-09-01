@@ -34,6 +34,16 @@ export interface SanitizedPlayerView {
   
   // 他家3人の公開情報（手牌の内容は厳格に除外）
   opponents: [OpponentPublicView, OpponentPublicView, OpponentPublicView];
+
+  // 現在自分に対する鳴き・ロン宣言の選択肢がある場合
+  pendingActionForMe?: {
+    canRon: boolean;
+    canPon: boolean;
+    canChi: boolean;
+    canDaiminkan: boolean;
+    targetTile?: Tile;
+    fromPlayerName?: string;
+  };
 }
 
 /**
@@ -63,6 +73,20 @@ export function sanitizeForPlayer(gameState: GameState, playerIndex: number): Sa
     };
   }) as [OpponentPublicView, OpponentPublicView, OpponentPublicView];
 
+  const myAction = gameState.pendingActions?.find(a => a.playerIndex === playerIndex);
+  let pendingActionForMe: SanitizedPlayerView['pendingActionForMe'] = undefined;
+  if (myAction) {
+    const fromP = gameState.players[myAction.fromPlayerIndex];
+    pendingActionForMe = {
+      canRon: myAction.canRon,
+      canPon: myAction.availableMelds.canPon,
+      canChi: myAction.availableMelds.canChi,
+      canDaiminkan: myAction.availableMelds.canDaiminkan,
+      targetTile: myAction.targetTile,
+      fromPlayerName: fromP ? fromP.name : '他家',
+    };
+  }
+
   return {
     roundWind: gameState.roundWind,
     roundNumber: gameState.roundNumber,
@@ -80,5 +104,6 @@ export function sanitizeForPlayer(gameState: GameState, playerIndex: number): Sa
     myMelds: me.melds,
     myIsRiichi: me.isRiichi,
     opponents,
+    pendingActionForMe,
   };
 }

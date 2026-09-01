@@ -5,7 +5,7 @@ import { tilesToCountArray } from '../hand/hand';
 const YAOKYU_INDICES = [0, 8, 9, 17, 18, 26, 27, 28, 29, 30, 31, 32, 33];
 
 /**
- * 国士無双のシャンテン数を計算
+ * 国士無双のシャンテン数を計算 (門前13-14枚のみ)
  */
 export function calcKokushiShanten(counts: number[]): number {
   let yaokyuKinds = 0;
@@ -24,7 +24,7 @@ export function calcKokushiShanten(counts: number[]): number {
 }
 
 /**
- * 七対子のシャンテン数を計算
+ * 七対子のシャンテン数を計算 (門前13-14枚のみ)
  */
 export function calcChiitoitsuShanten(counts: number[]): number {
   let pairs = 0;
@@ -119,8 +119,7 @@ function getSuitCombinations(counts: number[], offset: number): SuitAnalysisResu
 
   if (results.length === 0) return [{ mentsu: 0, tatsu: 0 }];
 
-  // 不要な劣位の組み合わせを間引く
-  const bestMap = new Map<number, number>(); // mentsu -> max tatsu
+  const bestMap = new Map<number, number>();
   for (const r of results) {
     const currentMax = bestMap.get(r.mentsu) ?? -1;
     if (r.tatsu > currentMax) {
@@ -136,7 +135,7 @@ function getSuitCombinations(counts: number[], offset: number): SuitAnalysisResu
 }
 
 /**
- * 字牌の面子・対子数を集計 (字牌は順子・嵌張が存在しない)
+ * 字牌の面子・対子数を集計
  */
 function getHonorCombinations(counts: number[]): SuitAnalysisResult {
   let mentsu = 0;
@@ -152,10 +151,15 @@ function getHonorCombinations(counts: number[]): SuitAnalysisResult {
 }
 
 /**
- * 面子手（一般形：4面子1雀頭）のシャンテン数を計算
+ * 面子手（一般形：targetMentsu面子 + 1雀頭）のシャンテン数を計算
+ * 手牌枚数 (13, 10, 7, 4 または 14, 11, 8, 5) に対応
  */
 export function calcMentsuShanten(counts: number[]): number {
-  let minShanten = 8; // 最大シャンテン数
+  const totalTiles = counts.reduce((sum, c) => sum + c, 0);
+  const targetMentsu = Math.min(4, Math.floor(totalTiles / 3));
+  const baseShanten = 2 * targetMentsu; // 例: 4面子手なら8, 3面子手なら6, 2面子手なら4
+
+  let minShanten = baseShanten;
 
   // 1. 雀頭なしの場合のシャンテン数計算
   const evalWithoutHead = (c: number[]) => {
@@ -169,9 +173,8 @@ export function calcMentsuShanten(counts: number[]): number {
         for (const s of souList) {
           const totalMentsu = m.mentsu + p.mentsu + s.mentsu + honor.mentsu;
           const rawTatsu = m.tatsu + p.tatsu + s.tatsu + honor.tatsu;
-          // 面子+塔子は最大4組まで
-          const validTatsu = Math.min(rawTatsu, Math.max(0, 4 - totalMentsu));
-          const shanten = 8 - 2 * totalMentsu - validTatsu;
+          const validTatsu = Math.min(rawTatsu, Math.max(0, targetMentsu - totalMentsu));
+          const shanten = baseShanten - 2 * totalMentsu - validTatsu;
           if (shanten < minShanten) {
             minShanten = shanten;
           }
@@ -196,9 +199,8 @@ export function calcMentsuShanten(counts: number[]): number {
           for (const s of souList) {
             const totalMentsu = m.mentsu + p.mentsu + s.mentsu + honor.mentsu;
             const rawTatsu = m.tatsu + p.tatsu + s.tatsu + honor.tatsu;
-            // 雀頭ありの場合、塔子は最大 (4 - totalMentsu) 個
-            const validTatsu = Math.min(rawTatsu, Math.max(0, 4 - totalMentsu));
-            const shanten = 8 - 2 * totalMentsu - validTatsu - 1; // 雀頭分 -1
+            const validTatsu = Math.min(rawTatsu, Math.max(0, targetMentsu - totalMentsu));
+            const shanten = baseShanten - 2 * totalMentsu - validTatsu - 1; // 雀頭分 -1
             if (shanten < minShanten) {
               minShanten = shanten;
             }
@@ -220,17 +222,20 @@ export function calcShanten(tilesOrCounts: Tile[] | number[]): ShantenResult {
     ? (tilesOrCounts as number[])
     : tilesToCountArray(tilesOrCounts as Tile[]);
 
+  const totalTiles = counts.reduce((sum, c) => sum + c, 0);
+  const isMenzenCount = totalTiles === 13 || totalTiles === 14;
+
   const mentsuShanten = calcMentsuShanten(counts);
-  const chiitoiShanten = calcChiitoitsuShanten(counts);
-  const kokushiShanten = calcKokushiShanten(counts);
+  const chiitoiShanten = isMenzenCount ? calcChiitoitsuShanten(counts) : 99;
+  const kokushiShanten = isMenzenCount ? calcKokushiShanten(counts) : 99;
 
   const minShanten = Math.min(mentsuShanten, chiitoiShanten, kokushiShanten);
 
   return {
     shanten: minShanten,
     isMentsuHand: minShanten === mentsuShanten,
-    isChiitoitsu: minShanten === chiitoiShanten,
-    isKokushi: minShanten === kokushiShanten,
+    isChiitoitsu: isMenzenCount && minShanten === chiitoiShanten,
+    isKokushi: isMenzenCount && minShanten === kokushiShanten,
     mentsuShanten,
     chiitoiShanten,
     kokushiShanten,

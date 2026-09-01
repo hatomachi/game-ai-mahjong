@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { PendingAction } from '../core/types/game';
 import { ChiOption } from '../core/meld/meldChecker';
-import { TileView } from './TileView';
-import { Hand, X } from 'lucide-react';
+import { MahjongTile } from './tiles/MahjongTile';
+import { getTileNameJa } from '../core/utils/tileUtils';
+import { Hand, X, Sparkles, Check } from 'lucide-react';
 
 interface ActionDialogProps {
   pendingAction: PendingAction;
@@ -16,110 +17,176 @@ export const ActionDialog: React.FC<ActionDialogProps> = ({
   pendingAction,
   onResolveAction,
 }) => {
-  const [selectedChi, setSelectedChi] = useState<ChiOption | null>(null);
-  const { availableMelds, canRon, ronScoreResult } = pendingAction;
+  const [selectedChiIndex, setSelectedChiIndex] = useState<number>(0);
+  const { availableMelds, canRon, ronScoreResult, targetTile, fromPlayerIndex } = pendingAction;
+
+  const targetPlayerName =
+    fromPlayerIndex === 1
+      ? '下家 (CPU-1)'
+      : fromPlayerIndex === 2
+      ? '対面 (CPU-2)'
+      : fromPlayerIndex === 3
+      ? '上家 (CPU-3)'
+      : '他家';
+
+  const chiOptions = availableMelds.chiOptions || [];
+  const activeChi = chiOptions[selectedChiIndex] || chiOptions[0];
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border-2 border-amber-500/80 rounded-2xl p-5 shadow-2xl max-w-md w-full flex flex-col gap-4 text-slate-100">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-          <div className="flex items-center gap-2 font-bold text-amber-400">
-            <Hand className="w-5 h-5" />
-            <span>アクション選択</span>
+    <div className="absolute bottom-[165px] left-1/2 -translate-x-1/2 z-40 w-full max-w-xl px-3 pointer-events-auto animate-in slide-in-from-bottom-3 duration-200">
+      <div className="bg-slate-900/95 backdrop-blur-md border-2 border-amber-400 rounded-2xl p-4 shadow-[0_12px_40px_rgba(0,0,0,0.85)] text-slate-100 flex flex-col gap-3">
+        {/* ヘッダー: 誰の打牌に対するアクションかを明示 */}
+        <div className="flex items-center justify-between border-b border-slate-700/80 pb-2.5">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-amber-500/20 text-amber-400 rounded-lg border border-amber-500/40">
+              <Hand className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-black text-sm text-amber-300">アクション確認</span>
+              <span className="text-xs text-slate-300 ml-2">
+                {targetPlayerName} の打牌
+              </span>
+            </div>
           </div>
-          <span className="text-xs text-slate-400">他家の打牌に対して宣言できます</span>
+
+          {/* 打牌された対象牌を大きくアイキャッチ表示 */}
+          {targetTile && (
+            <div className="flex items-center gap-2 bg-slate-950 px-3 py-1 rounded-xl border border-amber-500/40 shadow-inner">
+              <span className="text-[11px] text-slate-400 font-bold">打牌:</span>
+              <MahjongTile tile={targetTile} size="sm" />
+              <span className="text-xs font-black text-amber-300">
+                【{getTileNameJa(targetTile)}】
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* ロン和了の案内 */}
+        {/* ロン和了可能な場合 */}
         {canRon && ronScoreResult && (
-          <div className="bg-rose-950/60 border border-rose-600/60 rounded-xl p-3 flex items-center justify-between">
-            <div>
-              <div className="text-xs font-bold text-rose-300">ロン和了可能！</div>
-              <div className="text-sm font-black text-rose-400">
-                {ronScoreResult.title} ({ronScoreResult.finalGain}点)
+          <div className="bg-gradient-to-r from-rose-950/90 via-red-950/80 to-rose-950/90 border-2 border-rose-500 rounded-xl p-3 flex items-center justify-between shadow-lg">
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="w-5 h-5 text-amber-400 animate-spin" />
+              <div>
+                <div className="text-[11px] font-bold text-rose-300 uppercase tracking-wider">
+                  ロン和了可能！
+                </div>
+                <div className="text-base font-black text-rose-200">
+                  {ronScoreResult.title} ({ronScoreResult.finalGain.toLocaleString()}点)
+                </div>
               </div>
             </div>
             <button
               type="button"
               onClick={() => onResolveAction('ron')}
-              className="px-5 py-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-black rounded-lg shadow-lg shadow-rose-600/30 text-sm animate-pulse"
+              className="px-6 py-2.5 bg-gradient-to-r from-rose-600 via-red-500 to-rose-600 hover:from-rose-500 hover:to-red-400 text-white font-black rounded-xl shadow-lg shadow-rose-600/40 text-sm animate-bounce"
             >
               ロン！
             </button>
           </div>
         )}
 
-        {/* チーの候補が複数ある場合 */}
-        {availableMelds.canChi && availableMelds.chiOptions.length > 1 && (
-          <div className="flex flex-col gap-2">
-            <div className="text-xs text-slate-300 font-bold">チーする面子を選択:</div>
-            <div className="flex flex-col gap-1.5">
-              {availableMelds.chiOptions.map((opt, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => setSelectedChi(opt)}
-                  className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition ${
-                    selectedChi === opt
-                      ? 'bg-amber-950/60 border-amber-400 ring-1 ring-amber-400'
-                      : 'bg-slate-950 border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-1">
-                    <TileView tile={opt.tiles[0]} size="sm" />
-                    <TileView tile={opt.tiles[1]} size="sm" />
-                    <span className="text-xs text-slate-400 mx-1">+</span>
-                    <TileView tile={opt.targetTile} size="sm" />
+        {/* チー可能な場合：手牌のどの牌と組み合わせて順子を作るかを明確に表示 */}
+        {availableMelds.canChi && chiOptions.length > 0 && (
+          <div className="flex flex-col gap-2 bg-slate-950/70 p-2.5 rounded-xl border border-slate-800">
+            <div className="text-xs text-emerald-300 font-bold flex items-center justify-between">
+              <span>チーする順子の組み合わせ:</span>
+              {chiOptions.length > 1 && (
+                <span className="text-[10px] text-slate-400 font-normal">
+                  （複数パターンあります。使用する牌を選んでください）
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {chiOptions.map((opt, idx) => {
+                const isSelected = selectedChiIndex === idx;
+                const t1Name = getTileNameJa(opt.tiles[0]);
+                const t2Name = getTileNameJa(opt.tiles[1]);
+                const targetName = getTileNameJa(opt.targetTile);
+
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => setSelectedChiIndex(idx)}
+                    className={`flex items-center justify-between p-2 rounded-xl border cursor-pointer transition ${
+                      isSelected
+                        ? 'bg-emerald-950/80 border-emerald-400 ring-2 ring-emerald-400 shadow-md'
+                        : 'bg-slate-900/80 border-slate-700 hover:border-slate-500'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-0.5">
+                        <MahjongTile tile={opt.tiles[0]} size="xs" />
+                        <MahjongTile tile={opt.tiles[1]} size="xs" />
+                      </div>
+                      <span className="text-[10px] text-emerald-400 font-bold mx-0.5">+</span>
+                      <MahjongTile tile={opt.targetTile} size="xs" />
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <span className="text-[11px] font-bold text-slate-200">
+                        【{t1Name} {t2Name} + {targetName}】
+                      </span>
+                      {isSelected && <Check className="w-4 h-4 text-emerald-400" />}
+                    </div>
                   </div>
-                  <span className="text-xs font-bold text-amber-400">選択</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* 各種操作ボタン */}
-        <div className="flex items-center justify-end gap-2 flex-wrap pt-2 border-t border-slate-800">
-          {availableMelds.canPon && (
+        {/* ボタン一覧: チー・ポン・カン・パス */}
+        <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
+          <div className="text-[11px] text-slate-400">
+            ※右側AIチャットで「鳴くべき？」等のアドバイスも確認できます
+          </div>
+
+          <div className="flex items-center gap-2 ml-auto">
+            {availableMelds.canChi && (
+              <button
+                type="button"
+                onClick={() => onResolveAction('chi', activeChi)}
+                className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black rounded-xl text-xs transition shadow-lg shadow-emerald-900/40 flex items-center gap-1.5"
+              >
+                <span>チーする</span>
+                {activeChi && (
+                  <span className="text-[10px] bg-emerald-950/90 px-1.5 py-0.5 rounded font-normal text-emerald-200">
+                    [{getTileNameJa(activeChi.tiles[0])} {getTileNameJa(activeChi.tiles[1])}]
+                  </span>
+                )}
+              </button>
+            )}
+
+            {availableMelds.canPon && (
+              <button
+                type="button"
+                onClick={() => onResolveAction('pon')}
+                className="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white font-black rounded-xl text-xs transition shadow-lg shadow-amber-900/40"
+              >
+                ポンする
+              </button>
+            )}
+
+            {availableMelds.canDaiminkan && (
+              <button
+                type="button"
+                onClick={() => onResolveAction('daiminkan')}
+                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs transition shadow-md"
+              >
+                カン (明槓)
+              </button>
+            )}
+
             <button
               type="button"
-              onClick={() => onResolveAction('pon')}
-              className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-sm transition shadow"
+              onClick={() => onResolveAction('pass')}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium rounded-xl text-xs transition flex items-center gap-1 border border-slate-700"
             >
-              ポン
+              <X className="w-3.5 h-3.5" />
+              パス (スルー)
             </button>
-          )}
-
-          {availableMelds.canDaiminkan && (
-            <button
-              type="button"
-              onClick={() => onResolveAction('daiminkan')}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg text-sm transition shadow"
-            >
-              カン (明槓)
-            </button>
-          )}
-
-          {availableMelds.canChi && (
-            <button
-              type="button"
-              onClick={() => {
-                const opt = selectedChi || availableMelds.chiOptions[0];
-                onResolveAction('chi', opt);
-              }}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-sm transition shadow"
-            >
-              チー
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => onResolveAction('pass')}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium rounded-lg text-sm transition flex items-center gap-1"
-          >
-            <X className="w-4 h-4" />
-            パス
-          </button>
+          </div>
         </div>
       </div>
     </div>

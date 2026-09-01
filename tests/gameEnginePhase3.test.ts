@@ -7,6 +7,7 @@ import {
   declareTsumoWin,
   advanceToNextRound,
   handleExhaustiveDraw,
+  cpuStepAction,
 } from '../src/core/game/gameEngine';
 import { Tile } from '../src/core/types/tile';
 
@@ -113,5 +114,37 @@ describe('gameEngine Phase 3 Integration', () => {
     const nextRoundState = advanceToNextRound(winState);
     expect(nextRoundState.roundNumber).toBe(1); // 連荘で東1局のまま
     expect(nextRoundState.honba).toBe(1); // 1本場
+  });
+
+  it('下家(CPU-1)がポンした直後、drawnTileがnullでもcpuStepActionで打牌してゲームが進行する', () => {
+    let state = createInitialGameState();
+    state = startRound(state);
+
+    // 下家 (player 1, CPU-1) の手牌に 白(5z) を2枚持たせる (13枚ノーテン形: 124m456p789s11m55z)
+    state.players[1].hand = parseTiles('124m456p789s11m55z');
+
+    // 人間 (player 0) が 白(5z) を捨てる
+    state.activePlayerIndex = 0;
+    state.players[0].drawnTile = { id: '5z_discard', suit: 'honor', value: 5 };
+
+    const afterDiscard = playerDiscardAction(state, 0, '5z_discard');
+
+    // CPU-1 (下家) が自動でポンを実行した状態をシミュレート
+    // ポン直後: activePlayerIndex: 1, phase: 'player_turn', drawnTile: null, 手牌11枚, melds: 1つ
+    expect(afterDiscard.phase).toBe('player_turn');
+    expect(afterDiscard.activePlayerIndex).toBe(1);
+    expect(afterDiscard.players[1].melds.length).toBe(1);
+    expect(afterDiscard.players[1].melds[0].type).toBe('pon');
+    expect(afterDiscard.players[1].drawnTile).toBeNull();
+    expect(afterDiscard.players[1].hand.length).toBe(11);
+
+    // CPU-1 の打牌ステップを実行
+    const afterCpuDiscard = cpuStepAction(afterDiscard);
+
+    // 止まらずに打牌が実行され、手牌が10枚になり、次のプレイヤー（対面: player 2）のツモ番に進むこと
+    expect(afterCpuDiscard.players[1].hand.length).toBe(10);
+    expect(afterCpuDiscard.players[1].discards.length).toBe(1);
+    expect(afterCpuDiscard.activePlayerIndex).toBe(2); // 対面の手番へ
+    expect(afterCpuDiscard.players[2].drawnTile).not.toBeNull(); // 対面がツモ牌を引いている
   });
 });

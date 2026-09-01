@@ -14,6 +14,7 @@ export interface CpuDecision {
 /**
  * 簡易CPUの打牌選択ロジック
  * PlayerState または (hand, drawnTile) の両方に対応
+ * ポン・チー直後（drawnTile: null で hand が 3n+2 枚）の場合も正常に手牌から打牌
  */
 export function decideCpuDiscard(
   playerOrHand: PlayerState | Tile[],
@@ -21,7 +22,7 @@ export function decideCpuDiscard(
   visibleCounts?: number[]
 ): CpuDecision {
   let hand: Tile[];
-  let drawnTile: Tile;
+  let drawnTile: Tile | null = null;
   let isRiichi = false;
   let score = 25000;
   let isMenzen = true;
@@ -29,13 +30,10 @@ export function decideCpuDiscard(
 
   if (Array.isArray(playerOrHand)) {
     hand = playerOrHand;
-    drawnTile = drawnTileOrVisible as Tile;
+    drawnTile = (drawnTileOrVisible as Tile) || null;
     actualVisible = visibleCounts;
   } else {
     const player = playerOrHand;
-    if (!player.drawnTile) {
-      throw new Error('CPU has no drawn tile to discard');
-    }
     hand = player.hand;
     drawnTile = player.drawnTile;
     isRiichi = player.isRiichi;
@@ -44,8 +42,8 @@ export function decideCpuDiscard(
     actualVisible = Array.isArray(drawnTileOrVisible) ? drawnTileOrVisible : undefined;
   }
 
-  // リーチ中の場合は即ツモ切り
-  if (isRiichi) {
+  // リーチ中の場合は即ツモ切り (ツモ牌がある場合)
+  if (isRiichi && drawnTile) {
     return {
       discardTile: drawnTile,
       isTsumogiri: true,
@@ -55,13 +53,18 @@ export function decideCpuDiscard(
     };
   }
 
-  const fullHand = [...hand, drawnTile];
+  const fullHand = drawnTile ? [...hand, drawnTile] : [...hand];
+  if (fullHand.length === 0) {
+    throw new Error('CPU has no tiles to discard');
+  }
+
   const candidates = calcUkeireForDiscards(fullHand, actualVisible);
 
   if (candidates.length === 0) {
+    const fallbackTile = drawnTile || fullHand[fullHand.length - 1];
     return {
-      discardTile: drawnTile,
-      isTsumogiri: true,
+      discardTile: fallbackTile,
+      isTsumogiri: drawnTile ? fallbackTile.id === drawnTile.id : false,
       shanten: 8,
       totalUkeireCount: 0,
       declareRiichi: false,
@@ -92,10 +95,10 @@ export function decideCpuDiscard(
     }
   }
 
-  const isTsumogiri = chosen.discardTile.id === drawnTile.id;
+  const isTsumogiri = drawnTile ? chosen.discardTile.id === drawnTile.id : false;
 
-  // リーチ判定: 門前かつシャンテン数0（テンパイ）かつ持ち点1000以上
-  const canRiichi = isMenzen && !isRiichi && chosen.shantenAfterDiscard === 0 && score >= 1000;
+  // リーチ判定: 門前かつシャンテン数0（テンパイ）かつ持ち点1000以上かつツモ番時
+  const canRiichi = isMenzen && !isRiichi && chosen.shantenAfterDiscard === 0 && score >= 1000 && drawnTile !== null;
 
   return {
     discardTile: chosen.discardTile,
@@ -115,7 +118,7 @@ export function decideCpuAction(action: PendingAction): 'ron' | 'pon' | 'chi' | 
     return 'ron';
   }
 
-  // 役牌のポンや簡単な鳴き
+  // 役牌のポン
   if (action.availableMelds.canPon) {
     const target = action.availableMelds.ponOption?.targetTile;
     if (target && target.suit === 'honor' && target.value >= 5) {

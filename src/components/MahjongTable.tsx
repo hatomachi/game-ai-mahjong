@@ -322,17 +322,17 @@ export const MahjongTable: React.FC<MahjongTableProps> = ({
             onDeclareTsumoWin={onDeclareTsumoWin}
           />
         </div>
+
+        {/* 他家の打牌に対するアクション選択ダイアログ (ポン/チー/ロン/カン) */}
+        {humanPendingAction && gameState.phase === 'waiting_action' && (
+          <ActionDialog
+            pendingAction={humanPendingAction}
+            onResolveAction={onResolveAction}
+          />
+        )}
       </div>
 
-      {/* 3. 他家の打牌に対するアクション選択ダイアログ (ポン/チー/ロン/カン) */}
-      {humanPendingAction && gameState.phase === 'waiting_action' && (
-        <ActionDialog
-          pendingAction={humanPendingAction}
-          onResolveAction={onResolveAction}
-        />
-      )}
-
-      {/* 4. 局終了・ゲーム終了リザルトモーダル */}
+      {/* 局終了・ゲーム終了リザルトモーダル */}
       {(gameState.phase === 'round_end' || gameState.phase === 'game_over') && (
         <RoundResultModal
           gameState={gameState}

@@ -101,6 +101,21 @@ export function buildMahjongCoachPrompt(
 - 副露: ${myMeldsText}
 - 状態: ${context.myIsRiichi ? '立直中' : '門前/非立直'}
 - 自分の河: ${myDiscardsText}
+${
+  context.pendingActionForMe
+    ? `\n### ⚡【現在のアクション選択肢 (鳴き・ロン判断待ち)】
+- 状況: ${context.pendingActionForMe.fromPlayerName} の打牌 【${context.pendingActionForMe.targetTile ? getTileNameJa(context.pendingActionForMe.targetTile) : '？'}】 に対して宣言可能
+- 選択可能なアクション: ${[
+        context.pendingActionForMe.canRon ? 'ロン和了' : '',
+        context.pendingActionForMe.canChi ? 'チー' : '',
+        context.pendingActionForMe.canPon ? 'ポン' : '',
+        context.pendingActionForMe.canDaiminkan ? '大明槓' : '',
+        'パス (スルー)',
+      ]
+        .filter(Boolean)
+        .join(' / ')}`
+    : ''
+}
 
 ### 【他家の公開情報】
 ${opponentsSection}

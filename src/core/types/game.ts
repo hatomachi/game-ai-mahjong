@@ -43,6 +43,8 @@ export interface RoundResult {
 
 export interface PendingAction {
   playerIndex: number;
+  fromPlayerIndex: number;
+  targetTile: Tile;
   availableMelds: AvailableMelds;
   canRon: boolean;
   ronScoreResult?: ScoreCalculationResult;

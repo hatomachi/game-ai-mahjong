@@ -52,6 +52,9 @@ describe('GameEngine (4人対局ゲームループ)', () => {
 
     // Player 1 (CPU-1) が思考・打牌
     state = cpuStepAction(state);
+    if (state.phase === 'waiting_action') {
+      state = resolvePendingAction(state, 0, 'pass');
+    }
     expect(state.players[1].discards).toHaveLength(1);
     expect(state.activePlayerIndex).toBe(2); // 対面へ
     expect(state.players[2].drawnTile).not.toBeNull();
@@ -63,9 +66,16 @@ describe('GameEngine (4人対局ゲームループ)', () => {
 
     // 4人連続で打牌
     state = playerDiscardAction(state, 0, state.players[0].drawnTile!.id); // 0 -> 1
+    if (state.phase === 'waiting_action') state = resolvePendingAction(state, 0, 'pass');
+
     state = cpuStepAction(state); // 1 -> 2
+    if (state.phase === 'waiting_action') state = resolvePendingAction(state, 0, 'pass');
+
     state = cpuStepAction(state); // 2 -> 3
-    state = cpuStepAction(state); // 3 -> (waiting_action or 0)
+    if (state.phase === 'waiting_action') state = resolvePendingAction(state, 0, 'pass');
+
+    state = cpuStepAction(state); // 3 -> 0
+    if (state.phase === 'waiting_action') state = resolvePendingAction(state, 0, 'pass');
 
     while (state.phase === 'waiting_action') {
       state = resolvePendingAction(state, 0, 'pass');
