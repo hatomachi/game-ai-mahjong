@@ -56,7 +56,7 @@ export const CenterSquare: React.FC<CenterSquareProps> = ({ gameState }) => {
   };
 
   return (
-    <div className="relative w-full max-w-[200px] min-[390px]:max-w-[220px] sm:max-w-[260px] bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 rounded-xl sm:rounded-2xl border-2 border-emerald-600/60 shadow-2xl p-1 sm:p-2 flex flex-col items-center justify-between gap-0.5 sm:gap-1.5 select-none">
+    <div className="relative w-full max-w-[170px] min-[390px]:max-w-[190px] sm:max-w-[240px] bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 rounded-xl sm:rounded-2xl border-2 border-emerald-600/60 shadow-2xl p-1 sm:p-2 flex flex-col items-center justify-between gap-0.5 sm:gap-1.5 select-none">
       {/* 4方向の手番点灯インジケーター（東西南北） */}
       {/* 奥: 対面 (player 2) */}
       <div className="absolute top-0.5 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[8px] font-bold">

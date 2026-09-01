@@ -62,4 +62,33 @@ export function getDoraTileFromMarker(marker: Tile): { suit: Tile['suit']; value
   };
 }
 
+/**
+ * 牌に対応する高品質SVG画像パスを取得（FluffyStuff/riichi-mahjong-tiles 準拠）
+ */
+export function getTileSvgPath(tile?: Tile, isBack?: boolean): string {
+  if (isBack || !tile) {
+    return '/tiles/Back.svg';
+  }
+
+  if (tile.suit === 'honor') {
+    const honorMap: Record<number, string> = {
+      1: 'Ton.svg',
+      2: 'Nan.svg',
+      3: 'Shaa.svg',
+      4: 'Pei.svg',
+      5: 'Haku.svg',
+      6: 'Hatsu.svg',
+      7: 'Chun.svg',
+    };
+    return `/tiles/${honorMap[tile.value] || 'Blank.svg'}`;
+  }
+
+  const prefix = tile.suit === 'man' ? 'Man' : tile.suit === 'pin' ? 'Pin' : 'Sou';
+  if (tile.isRedDora && tile.value === 5) {
+    return `/tiles/${prefix}5-Dora.svg`;
+  }
+  return `/tiles/${prefix}${tile.value}.svg`;
+}
+
 export { createStandardTiles } from '../constants/tiles';
+
