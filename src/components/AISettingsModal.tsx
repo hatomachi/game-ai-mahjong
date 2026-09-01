@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { AISettings, AIProvider } from '../ai/services/types';
-import { loadAISettings, saveAISettings } from '../ai/services/storage';
+import {
+  loadAISettings,
+  saveAISettings,
+  AVAILABLE_GEMINI_MODELS,
+  AVAILABLE_CLAUDE_MODELS,
+} from '../ai/services/storage';
 import { Settings, Key, Sparkles, Terminal, Shield, ExternalLink, Check, Eye, EyeOff } from 'lucide-react';
 
 interface AISettingsModalProps {
@@ -128,7 +133,7 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClos
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <div>
                 <label className="block text-[11px] text-slate-400 mb-1">モデル選択</label>
                 <select
@@ -136,9 +141,14 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClos
                   onChange={(e) => setSettings({ ...settings, geminiModel: e.target.value })}
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
                 >
-                  <option value="gemini-3.7-flash">gemini-3.7-flash (推奨・最先端推論・思考対応)</option>
-                  <option value="gemini-3.1-pro">gemini-3.1-pro (最高峰フラッグシップ推論)</option>
-                  <option value="gemini-3.5-flash">gemini-3.5-flash (高速・高効率)</option>
+                  {AVAILABLE_GEMINI_MODELS.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.label} ({m.description})
+                    </option>
+                  ))}
+                  {!AVAILABLE_GEMINI_MODELS.some((m) => m.id === settings.geminiModel) && settings.geminiModel && (
+                    <option value={settings.geminiModel}>{settings.geminiModel} (カスタム)</option>
+                  )}
                 </select>
               </div>
             </div>
@@ -188,9 +198,14 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClos
                 onChange={(e) => setSettings({ ...settings, claudeModel: e.target.value })}
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
               >
-                <option value="claude-sonnet-5">claude-sonnet-5 (推奨・最新バランス・思考対応)</option>
-                <option value="claude-opus-5">claude-opus-5 (最高峰フラッグシップ推論)</option>
-                <option value="claude-haiku-4.5">claude-haiku-4.5 (超高速・低コスト)</option>
+                {AVAILABLE_CLAUDE_MODELS.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label} ({m.description})
+                  </option>
+                ))}
+                {!AVAILABLE_CLAUDE_MODELS.some((m) => m.id === settings.claudeModel) && settings.claudeModel && (
+                  <option value={settings.claudeModel}>{settings.claudeModel} (カスタム)</option>
+                )}
               </select>
             </div>
           </div>

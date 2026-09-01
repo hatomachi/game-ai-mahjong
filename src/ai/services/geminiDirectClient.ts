@@ -13,15 +13,15 @@ export async function callGeminiDirect(
 ): Promise<AICoachResponse> {
   const startTime = Date.now();
   const prompt = buildMahjongCoachPrompt(context, question);
-  const targetModel = model || 'gemini-3.7-flash';
+  const targetModel = model || 'gemini-2.5-flash';
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
 
-  const requestBody = {
+  const requestBody: any = {
     systemInstruction: {
       parts: [
         {
-          text: 'あなたは最高位戦やMリーグで活躍するプロ競技麻雀雀士であり、専属AI牌読みコーチです。提示された局面情報と計算済みデータを元に、単に答えを1行で出すのではなく、なぜその牌なのか、受け入れ枚数・打点・筋・現物・安全度の論理的根拠を最後まで詳しく丁寧に解説してください。回答は途中で切らず、必ず結びのアドバイスまで完全に書き切ってください。',
+          text: 'あなたは最高位戦やMリーグで活躍するプロ競技麻雀雀士であり、専属AI牌読みコーチです。提示された局面情報と計算済みデータを元に、なぜその牌なのか、受け入れ枚数・打点・筋・現物・安全度の論理的根拠を最後まで詳しく丁寧に解説してください。冗長な全パターン列挙は避け、要点を整理して簡潔かつ論理的に述べ、途中で途切れることなく必ず結びのアドバイスまで完全に書き切ってください。',
         },
       ],
     },
@@ -36,8 +36,11 @@ export async function callGeminiDirect(
       },
     ],
     generationConfig: {
-      temperature: 0.4,
+      temperature: 0.3,
       maxOutputTokens: 8192,
+      thinkingConfig: {
+        thinkingBudget: 0,
+      },
     },
   };
 
@@ -61,11 +64,18 @@ export async function callGeminiDirect(
     const data = await response.json();
     const candidate = data?.candidates?.[0];
     const parts = candidate?.content?.parts || [];
-    // 全てのpartsテキストを結合（複数partに分かれて返却されるケースに対応）
-    const candidateText = parts.map((p: any) => p.text || '').join('').trim();
+
+    // 思考パート(thought)を除外して本文パートのみを抽出（両方ある場合に対応）
+    const contentParts = parts.filter((p: any) => !p.thought);
+    const partsToUse = contentParts.length > 0 ? contentParts : parts;
+    let candidateText = partsToUse.map((p: any) => p.text || '').join('').trim();
 
     if (!candidateText) {
       throw new Error('Gemini API から有効な回答テキストが得られませんでした。');
+    }
+
+    if (candidate?.finishReason === 'MAX_TOKENS') {
+      candidateText += '\n\n*(※ 応答が最大長に達したため一部が省略されました)*';
     }
 
     return {
