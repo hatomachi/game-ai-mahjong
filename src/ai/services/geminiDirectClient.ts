@@ -21,7 +21,7 @@ export async function callGeminiDirect(
     systemInstruction: {
       parts: [
         {
-          text: 'あなたは最高位戦やMリーグで活躍するプロ競技麻雀雀士であり、専属AI牌読みコーチです。提示された局面情報と計算済みデータを元に、単に答えを1行で出すのではなく、なぜその牌なのか、受け入れ枚数・打点・筋・現物・安全度の論理的根拠を最後まで詳しく丁寧に解説してください。',
+          text: 'あなたは最高位戦やMリーグで活躍するプロ競技麻雀雀士であり、専属AI牌読みコーチです。提示された局面情報と計算済みデータを元に、単に答えを1行で出すのではなく、なぜその牌なのか、受け入れ枚数・打点・筋・現物・安全度の論理的根拠を最後まで詳しく丁寧に解説してください。回答は途中で切らず、必ず結びのアドバイスまで完全に書き切ってください。',
         },
       ],
     },
@@ -37,7 +37,7 @@ export async function callGeminiDirect(
     ],
     generationConfig: {
       temperature: 0.4,
-      maxOutputTokens: 4096,
+      maxOutputTokens: 8192,
     },
   };
 
@@ -59,7 +59,10 @@ export async function callGeminiDirect(
     }
 
     const data = await response.json();
-    const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const candidate = data?.candidates?.[0];
+    const parts = candidate?.content?.parts || [];
+    // 全てのpartsテキストを結合（複数partに分かれて返却されるケースに対応）
+    const candidateText = parts.map((p: any) => p.text || '').join('').trim();
 
     if (!candidateText) {
       throw new Error('Gemini API から有効な回答テキストが得られませんでした。');
@@ -67,7 +70,7 @@ export async function callGeminiDirect(
 
     return {
       success: true,
-      reply: candidateText.trim(),
+      reply: candidateText,
       providerUsed: 'Google Gemini (Direct API)',
       modelUsed: targetModel,
       executionTimeMs,

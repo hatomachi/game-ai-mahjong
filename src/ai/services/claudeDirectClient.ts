@@ -19,8 +19,8 @@ export async function callClaudeDirect(
 
   const requestBody = {
     model: targetModel,
-    max_tokens: 4096,
-    system: 'あなたは最高位戦やMリーグ等で活躍するプロ競技麻雀雀士であり、専属AI牌読みコーチです。提示された局面情報と計算済みデータを元に、単に答えを1行で出すのではなく、なぜその牌なのか、受け入れ枚数・打点・筋・現物・安全度の論理的根拠を最後まで詳しく丁寧に解説してください。',
+    max_tokens: 8192,
+    system: 'あなたは最高位戦やMリーグ等で活躍するプロ競技麻雀雀士であり、専属AI牌読みコーチです。提示された局面情報と計算済みデータを元に、単に答えを1行で出すのではなく、なぜその牌なのか、受け入れ枚数・打点・筋・現物・安全度の論理的根拠を最後まで詳しく丁寧に解説してください。回答は途中で切らず、必ず結びのアドバイスまで完全に書き切ってください。',
     messages: [
       {
         role: 'user',
@@ -50,7 +50,8 @@ export async function callClaudeDirect(
     }
 
     const data = await response.json();
-    const replyText = data?.content?.[0]?.text;
+    const contentBlocks = data?.content || [];
+    const replyText = contentBlocks.map((c: any) => c.text || '').join('').trim();
 
     if (!replyText) {
       throw new Error('Claude API から有効な回答テキストが得られませんでした。');
@@ -58,7 +59,7 @@ export async function callClaudeDirect(
 
     return {
       success: true,
-      reply: replyText.trim(),
+      reply: replyText,
       providerUsed: 'Anthropic Claude (Direct API)',
       modelUsed: targetModel,
       executionTimeMs,
