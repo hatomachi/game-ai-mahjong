@@ -3,7 +3,7 @@ import { Tile } from '../../core/types/tile';
 import { TileGraphic } from './TileGraphic';
 import { getTileNameJa } from '../../core/utils/tileUtils';
 
-export type TileSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type TileSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'responsive';
 export type TileOrientation = 'up' | 'down' | 'left' | 'right' | 'horizontal';
 
 interface MahjongTileProps {
@@ -42,6 +42,13 @@ export const MahjongTile: React.FC<MahjongTileProps> = ({
     md: { w: 'w-[30px]', h: 'h-[41px]', text: 'text-xs', radius: 'rounded-[4px]', depth: 'border-b-[3px]' },
     lg: { w: 'w-[38px]', h: 'h-[52px]', text: 'text-sm', radius: 'rounded-[5px]', depth: 'border-b-[4px]' },
     xl: { w: 'w-[44px]', h: 'h-[60px]', text: 'text-base', radius: 'rounded-[6px]', depth: 'border-b-[5px]' },
+    responsive: {
+      w: 'w-[22px] min-[390px]:w-[24px] sm:w-[32px] md:w-[38px]',
+      h: 'h-[31px] min-[390px]:h-[33px] sm:h-[44px] md:h-[52px]',
+      text: 'text-[10px] sm:text-xs md:text-sm',
+      radius: 'rounded-[3px] sm:rounded-[4px] md:rounded-[5px]',
+      depth: 'border-b-[2px] sm:border-b-[3px] md:border-b-[4px]',
+    },
   };
 
   const s = sizeMap[size];

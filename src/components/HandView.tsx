@@ -70,13 +70,13 @@ export const HandView: React.FC<HandViewProps> = ({
   };
 
   return (
-    <div className="bg-gradient-to-b from-slate-900/95 via-slate-950/95 to-[#1a0f07]/95 rounded-2xl border-2 border-amber-950/80 p-3.5 shadow-2xl flex flex-col gap-2.5 select-none">
+    <div className="bg-gradient-to-b from-slate-900/95 via-slate-950/95 to-[#1a0f07]/95 rounded-xl sm:rounded-2xl border-2 border-amber-950/80 p-2 sm:p-3.5 shadow-2xl flex flex-col gap-1.5 sm:gap-2.5 select-none">
       {/* 上部ステータスバー: シャンテン数・有効牌・操作アクション */}
-      <div className="flex items-center justify-between flex-wrap gap-2 text-xs border-b border-slate-800/80 pb-2">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 font-bold shadow-inner">
+      <div className="flex items-center justify-between flex-wrap gap-1.5 text-xs border-b border-slate-800/80 pb-1.5 sm:pb-2">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
+          <div className="flex items-center gap-1 bg-slate-950 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border border-slate-800 font-bold shadow-inner">
             <span
-              className={`${
+              className={`text-[11px] sm:text-xs ${
                 shantenRes.shanten <= 0
                   ? 'text-amber-400 font-black'
                   : shantenRes.shanten === 1
@@ -90,37 +90,37 @@ export const HandView: React.FC<HandViewProps> = ({
 
           {/* 13枚テンパイ時の待ち牌表示 */}
           {ukeire13 && ukeire13.currentShanten === 0 && (
-            <div className="text-[11px] text-amber-300 flex items-center gap-1 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-600/40">
+            <div className="text-[10px] sm:text-[11px] text-amber-300 flex items-center gap-1 bg-amber-950/40 px-1.5 sm:px-2 py-0.5 rounded border border-amber-600/40">
               <span className="font-bold">待ち:</span>
-              <div className="flex gap-1">
+              <div className="flex gap-0.5 sm:gap-1">
                 {ukeire13.ukeireTiles.map((t) => (
                   <span key={t.tileCode} className="font-bold bg-amber-900/60 text-amber-200 px-1 rounded">
-                    {t.tileCode} ({t.remainingCount}枚)
+                    {t.tileCode} ({t.remainingCount})
                   </span>
                 ))}
               </div>
-              <span className="text-slate-400">計 {ukeire13.totalUkeireCount}枚</span>
+              <span className="text-slate-400">計{ukeire13.totalUkeireCount}枚</span>
             </div>
           )}
 
           {/* 最適打牌ヒント（14枚時） */}
           {bestDiscard && isMyTurn && (
-            <div className="hidden sm:flex items-center gap-1 text-[11px] text-emerald-300 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-700/50">
-              <Sparkles className="w-3 h-3 text-emerald-400" />
-              <span>推奨: 【{getTileNameJa(bestDiscard.discardTile)}】(受入{bestDiscard.totalUkeireCount}枚)</span>
+            <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-emerald-300 bg-emerald-950/60 px-1.5 sm:px-2 py-0.5 rounded border border-emerald-700/50">
+              <Sparkles className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+              <span>推奨: 【{getTileNameJa(bestDiscard.discardTile)}】({bestDiscard.totalUkeireCount}枚)</span>
             </div>
           )}
         </div>
 
         {/* 打牌・アガリ・リーチ操作ボタン */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 ml-auto">
           {winCheck.isWin && isMyTurn && onDeclareTsumoWin && (
             <button
               type="button"
               onClick={onDeclareTsumoWin}
-              className="flex items-center gap-1 px-4 py-1.5 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black rounded-xl shadow-lg shadow-amber-500/30 text-xs animate-bounce"
+              className="flex items-center gap-1 px-3 sm:px-4 py-1 sm:py-1.5 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black rounded-lg sm:rounded-xl shadow-lg shadow-amber-500/30 text-[11px] sm:text-xs animate-bounce"
             >
-              <Trophy className="w-4 h-4" />
+              <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               ツモアガリ！
             </button>
           )}
@@ -129,14 +129,14 @@ export const HandView: React.FC<HandViewProps> = ({
             <button
               type="button"
               onClick={() => setIsRiichiSelected(!isRiichiSelected)}
-              className={`flex items-center gap-1 px-3 py-1.5 font-black rounded-xl text-xs transition shadow-md ${
+              className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 font-black rounded-lg sm:rounded-xl text-[11px] sm:text-xs transition shadow-md ${
                 isRiichiSelected
                   ? 'bg-rose-600 text-white ring-2 ring-rose-400 animate-pulse'
                   : 'bg-gradient-to-r from-rose-900 to-rose-950 hover:from-rose-800 hover:to-rose-900 border border-rose-600/60 text-rose-200'
               }`}
             >
-              <Zap className="w-3.5 h-3.5 text-amber-300" />
-              {isRiichiSelected ? 'リーチ宣言中 (牌を選択)' : 'リーチ'}
+              <Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-300" />
+              {isRiichiSelected ? 'リーチ中' : 'リーチ'}
             </button>
           )}
 
@@ -149,13 +149,13 @@ export const HandView: React.FC<HandViewProps> = ({
                 setSelectedTileId(null);
                 setIsRiichiSelected(false);
               }}
-              className={`px-3.5 py-1.5 font-bold rounded-xl shadow-lg text-xs transition ${
+              className={`px-3 sm:px-3.5 py-1 sm:py-1.5 font-bold rounded-lg sm:rounded-xl shadow-lg text-[11px] sm:text-xs transition ${
                 isRiichiSelected
                   ? 'bg-rose-600 hover:bg-rose-500 text-white animate-pulse'
                   : 'bg-emerald-600 hover:bg-emerald-500 text-white'
               }`}
             >
-              {isRiichiSelected ? 'リーチして切る' : '打牌する'}
+              {isRiichiSelected ? 'リーチ切る' : '打牌'}
             </button>
           )}
 
@@ -167,40 +167,40 @@ export const HandView: React.FC<HandViewProps> = ({
                 setSelectedTileId(null);
                 setIsRiichiSelected(false);
               }}
-              className="px-3 py-1.5 bg-sky-700/80 hover:bg-sky-600 border border-sky-500/50 text-white font-medium rounded-xl text-xs transition shadow"
+              className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-sky-700/80 hover:bg-sky-600 border border-sky-500/50 text-white font-medium rounded-lg sm:rounded-xl text-[11px] sm:text-xs transition shadow"
             >
-              ツモ切り
+              ツモ切
             </button>
           )}
         </div>
       </div>
 
       {/* 手牌タイル一覧（高級木製牌スタンド風） */}
-      <div className="relative pt-2 pb-1 px-2 bg-gradient-to-b from-[#2d1b10] to-[#1a0e08] rounded-xl border border-amber-900/60 shadow-inner flex items-center justify-center gap-2 overflow-x-auto">
+      <div className="relative pt-1.5 pb-1 px-1 sm:px-2 bg-gradient-to-b from-[#2d1b10] to-[#1a0e08] rounded-lg sm:rounded-xl border border-amber-900/60 shadow-inner flex items-center justify-center overflow-x-hidden">
         {/* 13枚の手牌 */}
-        <div className="flex items-end gap-1">
+        <div className="flex items-end gap-0.5 sm:gap-1">
           {hand.map((tile) => (
             <MahjongTile
               key={tile.id}
               tile={tile}
               isSelected={selectedTileId === tile.id}
               onClick={() => handleTileClick(tile.id)}
-              size="lg"
+              size="responsive"
             />
           ))}
         </div>
 
         {/* ツモ牌（右側にスペースを空けて配置） */}
         {drawnTile && (
-          <div className="flex items-end pl-3 ml-2 border-l border-amber-700/40 relative">
-            <span className="absolute -top-3 left-3 text-[10px] text-amber-400 font-bold tracking-widest uppercase">
+          <div className="flex items-end pl-1 sm:pl-3 ml-1 sm:ml-2 border-l border-amber-700/40 relative">
+            <span className="absolute -top-3 left-1 sm:left-3 text-[8px] sm:text-[10px] text-amber-400 font-bold tracking-wider uppercase">
               ツモ
             </span>
             <MahjongTile
               tile={drawnTile}
               isSelected={selectedTileId === drawnTile.id}
               isDrawn={true}
-              size="lg"
+              size="responsive"
               onClick={() => handleTileClick(drawnTile.id)}
             />
           </div>
@@ -208,7 +208,7 @@ export const HandView: React.FC<HandViewProps> = ({
       </div>
 
       {!isMyTurn && (
-        <div className="text-center text-[11px] text-slate-400 italic">
+        <div className="text-center text-[10px] sm:text-[11px] text-slate-400 italic">
           他家の手番です（思考中...）
         </div>
       )}

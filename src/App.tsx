@@ -13,6 +13,7 @@ import { ChiOption } from './core/meld/meldChecker';
 import { sanitizeForPlayer } from './ai/types/context';
 import { MahjongTable } from './components/MahjongTable';
 import { AICoachPanel } from './components/AICoachPanel';
+import { Bot, Gamepad2 } from 'lucide-react';
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -21,6 +22,7 @@ export default function App() {
   });
 
   const [isAutoPlay, setIsAutoPlay] = useState<boolean>(false);
+  const [mobileTab, setMobileTab] = useState<'table' | 'coach'>('table');
 
   // CPU手番時の自動実行ループ
   useEffect(() => {
@@ -283,9 +285,13 @@ export default function App() {
   const sanitizedContext = sanitizeForPlayer(gameState, 0);
 
   return (
-    <div className="h-screen w-screen flex bg-slate-950 overflow-hidden font-sans">
-      {/* メイン対局卓エリア */}
-      <div className="flex-1 h-full overflow-hidden">
+    <div className="h-[100dvh] w-screen flex flex-col lg:flex-row bg-slate-950 overflow-hidden font-sans relative">
+      {/* 1. メイン対局卓エリア */}
+      <div
+        className={`flex-1 h-full overflow-hidden ${
+          mobileTab === 'table' ? 'block' : 'hidden lg:block'
+        }`}
+      >
         <MahjongTable
           gameState={gameState}
           isAutoPlay={isAutoPlay}
@@ -298,12 +304,49 @@ export default function App() {
           onDeclareTsumoWin={handleDeclareTsumoWin}
           onResolveAction={handleResolveAction}
           onLoadScenario={handleLoadScenario}
+          onOpenCoach={() => setMobileTab('coach')}
         />
       </div>
 
-      {/* 右側 AI牌読みコーチングパネル */}
-      <div className="w-[420px] h-full flex-shrink-0">
-        <AICoachPanel context={sanitizedContext} />
+      {/* 2. AI牌読みコーチングパネル (PC: 常時右ペイン表示 / モバイル: coachタブ時表示) */}
+      <div
+        className={`w-full lg:w-[400px] xl:w-[440px] h-full flex-shrink-0 ${
+          mobileTab === 'coach' ? 'block' : 'hidden lg:block'
+        }`}
+      >
+        <AICoachPanel
+          context={sanitizedContext}
+          onClose={() => setMobileTab('table')}
+        />
+      </div>
+
+      {/* 3. モバイル専用ボトムナビゲーションバー */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 flex items-center justify-around py-2 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] pb-safe">
+        <button
+          type="button"
+          onClick={() => setMobileTab('table')}
+          className={`flex flex-col items-center gap-1 py-1 px-5 rounded-xl transition font-bold text-xs ${
+            mobileTab === 'table'
+              ? 'text-emerald-400 bg-emerald-950/50 border border-emerald-800/60 shadow-sm'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Gamepad2 className="w-5 h-5" />
+          <span>麻雀卓 (盤面)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMobileTab('coach')}
+          className={`flex flex-col items-center gap-1 py-1 px-5 rounded-xl transition font-bold text-xs relative ${
+            mobileTab === 'coach'
+              ? 'text-amber-400 bg-amber-950/50 border border-amber-800/60 shadow-sm'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Bot className="w-5 h-5" />
+          <span>AI牌読みコーチ</span>
+        </button>
       </div>
     </div>
   );

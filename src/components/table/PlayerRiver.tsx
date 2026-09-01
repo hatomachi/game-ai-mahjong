@@ -21,7 +21,7 @@ export const PlayerRiver: React.FC<PlayerRiverProps> = ({
   playerName,
   position,
   isCurrentPlayer = false,
-  size = 'sm',
+  size = 'xs',
   className = '',
 }) => {
   // 麻雀の河は 6枚×3段（最大18〜24枚）
@@ -37,29 +37,29 @@ export const PlayerRiver: React.FC<PlayerRiverProps> = ({
   return (
     <div
       data-position={position}
-      className={`flex flex-col gap-1 p-1.5 rounded-xl border transition-all duration-200 select-none ${
+      className={`flex flex-col gap-0.5 sm:gap-1 p-1 sm:p-1.5 rounded-lg sm:rounded-xl border transition-all duration-200 select-none ${
         isCurrentPlayer
           ? 'bg-amber-950/25 border-amber-500/60 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/30'
           : 'bg-emerald-950/40 border-emerald-800/40'
       } ${position === 'left' || position === 'right' ? 'w-full' : ''} ${className}`}
     >
       {/* プレイヤー名 & 捨て牌枚数 */}
-      <div className="flex items-center justify-between text-[10px] text-emerald-200 font-bold px-1">
-        <span className="flex items-center gap-1">
+      <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-emerald-200 font-bold px-1">
+        <span className="flex items-center gap-1 truncate max-w-[100px]">
           {playerName}
           {isCurrentPlayer && (
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping inline-block" />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping inline-block flex-shrink-0" />
           )}
         </span>
-        <span className="text-[9px] text-emerald-400/80 font-mono">
+        <span className="text-[8px] sm:text-[9px] text-emerald-400/80 font-mono flex-shrink-0">
           {discards.length}枚
         </span>
       </div>
 
       {/* 河の牌グリッド */}
-      <div className="flex flex-col gap-1 min-h-[90px] bg-slate-950/60 p-1.5 rounded-lg border border-emerald-900/60 shadow-inner">
+      <div className="flex flex-col gap-0.5 min-h-[76px] sm:min-h-[90px] bg-slate-950/60 p-1 sm:p-1.5 rounded-md sm:rounded-lg border border-emerald-900/60 shadow-inner justify-center">
         {discards.length === 0 ? (
-          <div className="text-[10px] text-slate-500 italic py-6 text-center">
+          <div className="text-[9px] sm:text-[10px] text-slate-500 italic py-4 text-center">
             捨て牌なし
           </div>
         ) : (

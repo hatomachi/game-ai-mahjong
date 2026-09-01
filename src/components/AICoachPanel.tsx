@@ -41,9 +41,11 @@ interface ChatMessage {
 
 interface AICoachPanelProps {
   context: SanitizedPlayerView;
+  onClose?: () => void;
+  onQuestionAsked?: () => void;
 }
 
-export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
+export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context, onClose, onQuestionAsked }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -57,7 +59,7 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
   const [settings, setSettings] = useState<AISettings>(loadAISettings());
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showPromptModal, setShowPromptModal] = useState(false);
-  const [showQuickSettings, setShowQuickSettings] = useState(true);
+  const [showQuickSettings, setShowQuickSettings] = useState(false);
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [serverConnected, setServerConnected] = useState<boolean>(false);
   const [availableBackends, setAvailableBackends] = useState<{ agy: boolean; claude: boolean; mock: boolean }>({
@@ -94,6 +96,8 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
   const handleSend = async (questionText?: string) => {
     const query = questionText || inputQuestion.trim();
     if (!query || isLoading) return;
+
+    onQuestionAsked?.();
 
     const userMsg: ChatMessage = {
       id: `user_${Date.now()}`,
@@ -186,13 +190,13 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
       settings.geminiApiKey?.trim() &&
       (settings.preferredProvider === 'auto' || settings.preferredProvider === 'gemini_direct')
     ) {
-      return { text: `Gemini Direct (${settings.geminiModel})`, color: 'bg-blue-400' };
+      return { text: `Gemini (${settings.geminiModel})`, color: 'bg-blue-400' };
     }
     if (
       settings.claudeApiKey?.trim() &&
       (settings.preferredProvider === 'auto' || settings.preferredProvider === 'claude_direct')
     ) {
-      return { text: `Claude Direct (${settings.claudeModel.split('-')[0]})`, color: 'bg-amber-400' };
+      return { text: `Claude (${settings.claudeModel.split('-')[0]})`, color: 'bg-amber-400' };
     }
     if (
       serverConnected &&
@@ -204,29 +208,39 @@ export const AICoachPanel: React.FC<AICoachPanelProps> = ({ context }) => {
     if (serverConnected && (settings.preferredProvider === 'auto' || settings.preferredProvider === 'claude_cli')) {
       return { text: 'ローカルCLI 稼働中', color: 'bg-blue-400' };
     }
-    return { text: 'ルールベース牌読み (オフライン/即時)', color: 'bg-slate-400' };
+    return { text: 'ルールベース (オフライン)', color: 'bg-slate-400' };
   };
 
   const statusBadge = getStatusBadge();
 
   return (
-    <div className="flex flex-col h-full bg-slate-900/90 border-l border-slate-700/80 text-slate-200">
+    <div className="flex flex-col h-full bg-slate-900/90 lg:border-l border-slate-700/80 text-slate-200 pb-16 lg:pb-0">
       {/* ヘッダー */}
-      <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/80">
+      <div className="p-2.5 sm:p-3 border-b border-slate-800 flex items-center justify-between bg-slate-950/80">
         <div className="flex items-center gap-2">
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="lg:hidden p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold"
+              title="盤面に戻る"
+            >
+              ← 卓へ
+            </button>
+          )}
           <div className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/30">
-            <Bot className="w-5 h-5" />
+            <Bot className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
+            <h2 className="text-xs sm:text-sm font-bold text-slate-100 flex items-center gap-1">
               AI牌読みコーチ
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-normal">
+              <span className="text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-normal">
                 不完全情報保証
               </span>
             </h2>
-            <div className="flex items-center gap-1.5 text-[10px]">
-              <span className={`w-2 h-2 rounded-full ${statusBadge.color}`} />
-              <span className="text-slate-400 truncate max-w-[150px]">{statusBadge.text}</span>
+            <div className="flex items-center gap-1 text-[9px] sm:text-[10px]">
+              <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${statusBadge.color}`} />
+              <span className="text-slate-400 truncate max-w-[130px] sm:max-w-[150px]">{statusBadge.text}</span>
             </div>
           </div>
         </div>
