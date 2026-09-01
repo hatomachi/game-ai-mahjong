@@ -1,4 +1,4 @@
-# AI Mahjong Coach (麻雀ゲーム & AI牌読みコーチ) 🀄🤖
+# AI Mahjong Coach (麻雀ゲーム & AI牌読みコーチ) 🀄　🤖
 
 ブラウザ4人麻雀ゲーム（1プレイヤー vs 3CPU）と、Direct API（Google Gemini / Claude）およびローカルCLI（Antigravity CLI / Claude Code）を連携させた**「不完全情報AI牌読みコーチングシステム」**です。
 
